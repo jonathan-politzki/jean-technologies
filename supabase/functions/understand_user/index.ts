@@ -13,8 +13,8 @@ serve(async (req) => {
 
     // Initialize clients
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('NEXT_PUBLIC_SUPABASE_URL') ?? '',
+      Deno.env.get('NEXT_PUBLIC_SUPABASE_ANON_KEY') ?? ''
     )
 
     const openai = new OpenAIApi(

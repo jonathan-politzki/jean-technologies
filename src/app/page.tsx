@@ -1,11 +1,12 @@
 'use client';
 
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 export default function Home() {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -24,7 +25,7 @@ export default function Home() {
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
         if (sessionError) throw sessionError
-        setUser(session?.user ?? null)
+        setUser(session?.user || null)
       } catch (e) {
         console.error('Session error:', e)
         setError('Failed to get user session')
@@ -36,7 +37,7 @@ export default function Home() {
     getUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+      setUser(session?.user || null)
       router.refresh()
     })
 
@@ -81,6 +82,12 @@ export default function Home() {
         <div className="p-4 bg-white rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-2">Welcome!</h2>
           <p className="text-gray-600">{user.email}</p>
+          <button
+            onClick={() => supabase.auth.signOut()}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+          >
+            Sign Out
+          </button>
         </div>
       ) : (
         <button

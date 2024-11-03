@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -10,10 +10,19 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        const { error } = await supabase.auth.exchangeCodeForSession(window.location.hash);
+        // Get the code from the URL
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+
+        if (!code) throw new Error('No code provided');
+
+        // Exchange code for session
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
         if (error) throw error;
+
+        console.log('Auth successful:', data);
       } catch (error) {
-        console.error('Error:', error?.message);
+        console.error('Auth error:', error);
       }
 
       // Redirect back to the main page

@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Platform, SocialProfile } from '../lib/types';
 import { handleError } from '../utils/errors';
+import { Provider } from '@supabase/supabase-js';
 
 export function useSocialConnect() {
   const [loading, setLoading] = useState(false);
@@ -12,8 +13,11 @@ export function useSocialConnect() {
       setLoading(true);
       setError(null);
 
+      // Convert platform to Provider type that Supabase expects
+      const provider = platform as Provider;
+
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: platform,
+        provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
           scopes: getPlatformScopes(platform)

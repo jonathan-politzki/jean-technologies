@@ -9,7 +9,7 @@ export interface User {
 }
 
 // Social Types
-export type Platform = 'linkedin' | 'github' | 'google' | 'instagram' | 'twitter';
+export type Platform = 'google' | 'github' | 'linkedin';
 
 export interface SocialProfile {
   id: string;

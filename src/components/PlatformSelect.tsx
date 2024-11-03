@@ -7,9 +7,9 @@ interface Props {
 }
 
 const PLATFORMS: { id: Platform; name: string; icon: string }[] = [
-  { id: 'linkedin', name: 'LinkedIn', icon: '🔗' },
+  { id: 'google', name: 'Google', icon: '🌐' },
   { id: 'github', name: 'GitHub', icon: '💻' },
-  { id: 'google', name: 'Google', icon: '🌐' }
+  { id: 'linkedin', name: 'LinkedIn', icon: '🔗' }
 ];
 
 export function PlatformSelect({ connectedPlatforms, onConnect, onDisconnect }: Props) {

@@ -1,10 +1,18 @@
 # Dependencies
 /node_modules
 /.pnp
-.pnp.js
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Next.js App
+/my-app
 
 # Environment Variables
-.env
+.env*
 .env.local
 .env.development.local
 .env.test.local
@@ -17,9 +25,9 @@
 /.next/
 /out/
 /build
+next-env.d.ts
 
 # Production
-/build
 /dist
 
 # Debug
@@ -42,12 +50,8 @@ yarn-error.log*
 /supabase/.temp
 .supabase
 
-# Misc
-.DS_Store
-*.pem
+# Deployment
 .vercel
-
-# Local Netlify folder
 .netlify
 
 # Cache

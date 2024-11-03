@@ -2,25 +2,32 @@
 
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const supabase = createClientComponentClient();
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setLoading(false);
-    }
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user || null);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error getting session:', error);
+        setUser(null);
+        setLoading(false);
+      }
+    };
 
     getUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      setUser(session?.user || null);
     });
 
     return () => subscription.unsubscribe();
@@ -67,9 +74,15 @@ export default function Home() {
         ) : (
           <div className="bg-white rounded-lg shadow-sm p-8">
             <h2 className="text-xl font-semibold mb-6">Welcome Back!</h2>
-            <pre className="bg-gray-100 p-4 rounded">
+            <pre className="bg-gray-100 p-4 rounded overflow-auto">
               {JSON.stringify(user, null, 2)}
             </pre>
+            <button
+              onClick={() => supabase.auth.signOut()}
+              className="mt-4 w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Sign Out
+            </button>
           </div>
         )}
       </div>

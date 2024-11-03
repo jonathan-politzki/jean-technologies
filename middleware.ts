@@ -3,36 +3,24 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
+  const res = NextResponse.next();
+  
   try {
-    // Create a response object
-    const res = NextResponse.next();
-    
-    // Create a Supabase client specifically for the edge
     const supabase = createMiddlewareClient({ 
       req: request, 
-      res,
-      options: {
-        auth: {
-          persistSession: false
-        }
-      }
+      res
     });
-
-    // Get the session without persistence
-    await supabase.auth.getSession();
     
+    await supabase.auth.getSession();
     return res;
   } catch (error) {
-    console.error('Middleware error:', error);
-    return NextResponse.next();
+    // On error, still allow the request to proceed
+    return res;
   }
 }
 
 export const config = {
   matcher: [
-    // Only match auth-related paths and main pages
-    '/',
-    '/api/auth/:path*',
-    '/((?!_next/static|_next/image|favicon.ico|public/.*|api/(?!auth)).*)'
-  ]
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
 };

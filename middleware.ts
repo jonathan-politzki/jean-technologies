@@ -4,10 +4,16 @@ import type { NextRequest } from 'next/server';
 
 export const middleware = async (request: NextRequest) => {
   try {
-    const res = NextResponse.next();
+    // Required for authentication to work from edge functions
+    const requestHeaders = new Headers(request.headers);
+    const res = NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+
     const supabase = createMiddlewareClient({ req: request, res });
 
-    // Refresh session if expired - required for Server Components
     await supabase.auth.getSession();
 
     return res;
@@ -17,15 +23,9 @@ export const middleware = async (request: NextRequest) => {
   }
 };
 
+// This ensures middleware runs on the appropriate paths
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
-     */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };

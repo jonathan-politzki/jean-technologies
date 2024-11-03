@@ -1,104 +1,95 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { User } from '@supabase/supabase-js';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 export default function Home() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-  const supabase = createClientComponentClient();
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
+  const supabase = createClientComponentClient()
 
   useEffect(() => {
+    // Check for auth errors in URL
+    const params = new URLSearchParams(window.location.search)
+    const authError = params.get('error')
+    if (authError) {
+      setError(authError)
+      console.error('Auth error:', authError)
+    }
+
     const getUser = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user || null);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error getting session:', error);
-        setUser(null);
-        setLoading(false);
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        if (sessionError) throw sessionError
+        setUser(session?.user ?? null)
+      } catch (e) {
+        console.error('Session error:', e)
+        setError('Failed to get user session')
+      } finally {
+        setLoading(false)
       }
-    };
+    }
 
-    getUser();
+    getUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-    });
+      setUser(session?.user ?? null)
+      router.refresh()
+    })
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => subscription.unsubscribe()
+  }, [supabase, router])
 
   const handleSignIn = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
           redirectTo: `${window.location.origin}/auth/callback`
         }
-      });
+      })
 
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Error signing in with Google');
+      if (error) throw error
+    } catch (e) {
+      console.error('Sign in error:', e)
+      setError('Failed to sign in with Google')
     }
-  };
+  }
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="flex justify-center items-center min-h-screen">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+    </div>
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-md mx-auto pt-12">
-        <h1 className="text-4xl font-bold text-center mb-8">Jean</h1>
-        
-        {!user ? (
-          <div className="bg-white rounded-lg shadow-sm p-8">
-            <h2 className="text-xl font-semibold mb-6 text-center">
-              Get Started
-            </h2>
-            <button
-              onClick={handleSignIn}
-              className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              <GoogleIcon />
-              Continue with Google
-            </button>
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow-sm p-8">
-            <h2 className="text-xl font-semibold mb-6">Welcome Back!</h2>
-            <pre className="bg-gray-100 p-4 rounded overflow-auto">
-              {JSON.stringify(user, null, 2)}
-            </pre>
-            <button
-              onClick={() => supabase.auth.signOut()}
-              className="mt-4 w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Sign Out
-            </button>
-          </div>
-        )}
-      </div>
-    </main>
-  );
+    <div className="flex flex-col items-center justify-center min-h-screen py-2">
+      {error && (
+        <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
+          {error}
+        </div>
+      )}
+      
+      {user ? (
+        <div className="p-4 bg-white rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-2">Welcome!</h2>
+          <p className="text-gray-600">{user.email}</p>
+        </div>
+      ) : (
+        <button
+          onClick={handleSignIn}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+        >
+          Sign in with Google
+        </button>
+      )}
+    </div>
+  )
 }
-
-const GoogleIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24">
-    <path
-      fill="currentColor"
-      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-    />
-    <path
-      fill="currentColor"
-      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-    />
-  </svg>
-);

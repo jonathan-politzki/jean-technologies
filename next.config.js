@@ -2,12 +2,14 @@
 const nextConfig = {
     reactStrictMode: true,
     experimental: {
-        // Enable modern edge runtime
-        runtime: 'experimental-edge',
+        serverActions: true
     },
-    // Disable user agent parsing in middleware
     skipMiddlewareUrlNormalize: true,
     skipTrailingSlashRedirect: true,
+    middleware: {
+        skipUserAgent: true,
+        skipMiddlewareUrlNormalize: true
+    }
 }
 
 module.exports = nextConfig

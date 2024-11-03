@@ -7,7 +7,10 @@ const nextConfig = {
         }
     },
     skipMiddlewareUrlNormalize: true,
-    skipTrailingSlashRedirect: true
+    skipTrailingSlashRedirect: true,
+    middleware: {
+        skipTrailingSlashRedirect: true
+    }
 }
 
 module.exports = nextConfig

@@ -80,18 +80,23 @@ export function OnboardingFlow() {
   );
 }
 
-// Example client usage for companies
-const response = await fetch('/api/understand', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${API_KEY}`
-  },
-  body: JSON.stringify({
-    userId: 'user-123',
-    domain: 'shopping_preferences',
-    query: 'What kind of fashion styles would this user prefer?'
-  })
-});
+// Example of how to use the understand API (moved to documentation or separate file)
+/*
+async function getUnderstanding(userId: string) {
+  const response = await fetch('/api/understand', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${API_KEY}`
+    },
+    body: JSON.stringify({
+      userId,
+      domain: 'shopping_preferences',
+      query: 'What kind of fashion styles would this user prefer?'
+    })
+  });
 
-const { embedding, metadata } = await response.json();
+  const { embedding, metadata } = await response.json();
+  return { embedding, metadata };
+}
+*/

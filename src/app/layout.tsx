@@ -1,5 +1,4 @@
 import '@/styles/globals.css'
-import AuthGuard from '@/components/AuthGuard'
 
 export const metadata = {
   title: 'Jean Technologies',
@@ -13,9 +12,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
-        <AuthGuard>{children}</AuthGuard>
-      </body>
+      <body>{children}</body>
     </html>
   )
 } 

@@ -6,6 +6,9 @@ const nextConfig = {
             bodySizeLimit: '2mb'
         }
     },
+    middleware: {
+        runtime: 'nodejs'
+    },
     skipMiddlewareUrlNormalize: true,
     skipTrailingSlashRedirect: true
 }

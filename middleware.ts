@@ -2,8 +2,11 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// Force Node.js runtime
+export const runtime = 'nodejs';
+
 export async function middleware(request: NextRequest) {
-  // Early return for static files and API routes
+  // Skip middleware for static files and API routes
   if (request.nextUrl.pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js)$/) ||
       request.nextUrl.pathname.startsWith('/_next') ||
       request.nextUrl.pathname.startsWith('/api')) {
@@ -15,26 +18,21 @@ export async function middleware(request: NextRequest) {
     const supabase = createMiddlewareClient({ 
       req: request, 
       res
-    }, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false
-      },
-      global: {
-        fetch: fetch
-      }
     });
+
+    // Get session but don't wait for it
+    supabase.auth.getSession().catch(console.error);
     
-    await supabase.auth.getSession();
     return res;
   } catch (error) {
-    // If middleware fails, still allow the request to proceed
+    console.error('Middleware error:', error);
     return NextResponse.next();
   }
 }
 
 export const config = {
   matcher: [
+    // Exclude static files, API routes, and Next.js internals
     '/((?!_next/static|_next/image|favicon.ico|api/|_next/data|images/).*)'
   ]
 };

@@ -1,0 +1,12 @@
+{
+  "name": "jean-technologies",
+  "version": "1.0.0",
+  "description": "Official repository of Jean Technologies and our flagship product, Jean Connect.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

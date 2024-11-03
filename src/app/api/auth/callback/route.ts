@@ -30,6 +30,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL('/', requestUrl.origin));
   } catch (error) {
     console.error('Unexpected error:', error);
-    return NextResponse.redirect(new URL('/?error=unexpected_error', requestUrl.origin));
+    const baseUrl = new URL(request.url).origin;
+    return NextResponse.redirect(new URL('/?error=unexpected_error', baseUrl));
   }
 }

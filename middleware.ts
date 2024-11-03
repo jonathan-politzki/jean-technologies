@@ -2,30 +2,22 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// Switch to nodejs runtime
+export const runtime = 'nodejs';
+
 export async function middleware(request: NextRequest) {
-  const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req: request, res });
-
   try {
-    // Refresh session if needed
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    // Add session user to response headers for logging
-    if (session?.user) {
-      res.headers.set('x-user-id', session.user.id);
-    }
-
+    const res = NextResponse.next();
+    const supabase = createMiddlewareClient({ req: request, res });
+    await supabase.auth.getSession();
     return res;
   } catch (error) {
     console.error('Middleware error:', error);
-    
-    // Return original response if auth fails
-    return res;
+    return NextResponse.next();
   }
 }
 
+// Update matcher to be more specific and exclude problematic paths
 export const config = {
   matcher: [
     /*
@@ -33,8 +25,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public files (public directory)
+     * - public files
+     * - api routes
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$|api).*)',
   ],
 };

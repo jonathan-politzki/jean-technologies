@@ -1,14 +1,23 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
+import { logger } from './logger';
 
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  logger.error('Missing Supabase environment variables');
+  throw new Error('Missing required environment variables for Supabase');
 }
 
-if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-  throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable')
-}
-
-export const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    detectSessionInUrl: true,
+    autoRefreshToken: true,
+  },
+  global: {
+    headers: {
+      'x-client-info': `@supabase/auth-helpers-nextjs/${process.env.npm_package_version || 'unknown'}`
+    }
+  }
+});

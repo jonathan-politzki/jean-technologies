@@ -1,7 +1,6 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { createEdgeClient } from '@/lib/supabase';
 
 export const runtime = 'edge';
 
@@ -14,8 +13,8 @@ export async function GET(request: Request) {
       throw new Error('No code provided');
     }
 
-    // Use edge-compatible client
-    const supabase = createEdgeClient();
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     
     // Exchange the code for a session
     const { error } = await supabase.auth.exchangeCodeForSession(code);
@@ -24,14 +23,12 @@ export async function GET(request: Request) {
       throw error;
     }
 
-    // Set cookies for the session
-    const cookieStore = cookies();
-    const response = NextResponse.redirect(new URL('/', requestUrl.origin));
-    
-    // Add cache control headers
-    response.headers.set('Cache-Control', 'no-store, max-age=0');
-    
-    return response;
+    return NextResponse.redirect(new URL('/', requestUrl.origin), {
+      status: 302,
+      headers: {
+        'Cache-Control': 'no-store, max-age=0'
+      }
+    });
 
   } catch (error) {
     console.error('Auth error:', error);

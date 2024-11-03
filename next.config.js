@@ -5,12 +5,6 @@ const nextConfig = {
         serverActions: {
             bodySizeLimit: '2mb'
         }
-    },
-    skipMiddlewareUrlNormalize: true,
-    skipTrailingSlashRedirect: true,
-    experimental: {
-        runtime: 'edge',
-        serverComponents: true
     }
 }
 

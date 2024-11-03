@@ -1,6 +1,5 @@
 import '@/styles/globals.css'
-import { Providers } from './providers'
-import { ErrorBoundary } from '@/components/ErrorBoundary'
+import AuthGuard from '@/components/AuthGuard'
 
 export const metadata = {
   title: 'Jean Technologies',
@@ -15,9 +14,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ErrorBoundary>
-          <Providers>{children}</Providers>
-        </ErrorBoundary>
+        <AuthGuard>{children}</AuthGuard>
       </body>
     </html>
   )

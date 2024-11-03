@@ -2,14 +2,12 @@
 const nextConfig = {
     reactStrictMode: true,
     experimental: {
-        serverActions: true
+        serverActions: {
+            bodySizeLimit: '2mb'
+        }
     },
     skipMiddlewareUrlNormalize: true,
-    skipTrailingSlashRedirect: true,
-    middleware: {
-        skipUserAgent: true,
-        skipMiddlewareUrlNormalize: true
-    }
+    skipTrailingSlashRedirect: true
 }
 
 module.exports = nextConfig

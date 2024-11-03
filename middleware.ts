@@ -2,37 +2,40 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Explicitly set edge runtime
-export const runtime = 'edge';
-
 export async function middleware(request: NextRequest) {
-  const res = NextResponse.next();
-  
-  // Skip middleware for static files and API routes
-  if (request.nextUrl.pathname.startsWith('/_next') || 
+  // Early return for static files and API routes
+  if (request.nextUrl.pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js)$/) ||
+      request.nextUrl.pathname.startsWith('/_next') ||
       request.nextUrl.pathname.startsWith('/api')) {
-    return res;
+    return NextResponse.next();
   }
 
-  const supabase = createMiddlewareClient({ 
-    req: request, 
-    res
-  });
-  
-  await supabase.auth.getSession();
-  return res;
+  try {
+    const res = NextResponse.next();
+    const supabase = createMiddlewareClient({ 
+      req: request, 
+      res,
+      options: {
+        auth: {
+          persistSession: false
+        },
+        global: {
+          fetch: fetch.bind(globalThis)
+        }
+      }
+    });
+    
+    await supabase.auth.getSession();
+    return res;
+  } catch (error) {
+    // If middleware fails, still allow the request to proceed
+    return NextResponse.next();
+  }
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - images files
-     * - api routes
-     */
-    '/((?!_next/static|_next/image|favicon.ico|images|api).*)',
-  ],
+    // Match all paths except static files and API routes
+    '/((?!_next/static|_next/image|favicon.ico|api/|_next/data|images/).*)'
+  ]
 };

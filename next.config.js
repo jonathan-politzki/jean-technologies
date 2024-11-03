@@ -1,11 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  output: 'standalone',
-  distDir: '.next',
-  experimental: {
-    outputFileTracingRoot: process.env.VERCEL ? undefined : __dirname,
+    reactStrictMode: true,
   }
-}
-
-module.exports = nextConfig 
+  
+  module.exports = nextConfig

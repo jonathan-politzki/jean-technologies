@@ -8,8 +8,9 @@ const nextConfig = {
     },
     skipMiddlewareUrlNormalize: true,
     skipTrailingSlashRedirect: true,
-    middleware: {
-        skipTrailingSlashRedirect: true
+    experimental: {
+        runtime: 'edge',
+        serverComponents: true
     }
 }
 

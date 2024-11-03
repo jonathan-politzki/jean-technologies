@@ -2,7 +2,9 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-export const dynamic = 'force-dynamic';
+// Remove force-dynamic and handle caching explicitly
+export const runtime = 'edge';
+export const revalidate = 0;
 
 export async function GET(request: Request) {
   try {
@@ -10,27 +12,36 @@ export async function GET(request: Request) {
     const code = requestUrl.searchParams.get('code');
 
     if (!code) {
-      console.error('No code provided');
-      return NextResponse.redirect(new URL('/?error=missing_code', requestUrl.origin));
+      return NextResponse.redirect(
+        new URL('/?error=missing_code', requestUrl.origin),
+        { status: 302 }
+      );
     }
 
-    // Create a Supabase client configured to use cookies
     const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => cookieStore,
+    });
 
-    // Exchange the code for a session
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
-      console.error('Error exchanging code:', error.message);
-      return NextResponse.redirect(new URL(`/?error=${encodeURIComponent(error.message)}`, requestUrl.origin));
+      console.error('Auth error:', error.message);
+      return NextResponse.redirect(
+        new URL(`/?error=${encodeURIComponent(error.message)}`, requestUrl.origin),
+        { status: 302 }
+      );
     }
 
-    // Successful authentication, redirect to home page
-    return NextResponse.redirect(new URL('/', requestUrl.origin));
+    return NextResponse.redirect(new URL('/', requestUrl.origin), {
+      status: 302
+    });
+    
   } catch (error) {
-    console.error('Unexpected error:', error);
-    const baseUrl = new URL(request.url).origin;
-    return NextResponse.redirect(new URL('/?error=unexpected_error', baseUrl));
+    console.error('Callback error:', error);
+    return NextResponse.redirect(
+      new URL('/?error=unexpected_error', new URL(request.url).origin),
+      { status: 302 }
+    );
   }
 }

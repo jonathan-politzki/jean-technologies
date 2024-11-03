@@ -2,9 +2,20 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { OpenAI } from 'openai';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Only initialize OpenAI if API key exists
+const openai = process.env.OPENAI_API_KEY 
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
 
 export async function POST(request: Request) {
+  // Check for OpenAI API key before processing
+  if (!openai) {
+    return NextResponse.json(
+      { error: 'OpenAI API key not configured' },
+      { status: 503 }
+    );
+  }
+
   try {
     const { userId, domain, query } = await request.json();
 

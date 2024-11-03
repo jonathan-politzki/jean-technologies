@@ -2,7 +2,8 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-export const runtime = 'edge';
+// Switch to nodejs runtime
+export const runtime = 'nodejs';
 
 export async function GET(request: Request) {
   try {

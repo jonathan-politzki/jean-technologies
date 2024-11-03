@@ -1,6 +1,7 @@
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { createEdgeClient } from '@/lib/supabase';
 
 export async function middleware(request: NextRequest) {
   // Early return for static files and API routes
@@ -14,18 +15,13 @@ export async function middleware(request: NextRequest) {
     const res = NextResponse.next();
     const supabase = createMiddlewareClient({ 
       req: request, 
-      res,
-      options: {
-        auth: {
-          persistSession: false
-        },
-        global: {
-          fetch: fetch.bind(globalThis)
-        }
-      }
+      res
     });
+
+    // Use edge-specific client for auth
+    const edgeClient = createEdgeClient();
+    await edgeClient.auth.getSession();
     
-    await supabase.auth.getSession();
     return res;
   } catch (error) {
     // If middleware fails, still allow the request to proceed
@@ -35,7 +31,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match all paths except static files and API routes
     '/((?!_next/static|_next/image|favicon.ico|api/|_next/data|images/).*)'
   ]
 };

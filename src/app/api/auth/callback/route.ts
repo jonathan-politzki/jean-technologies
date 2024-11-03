@@ -2,43 +2,34 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  if (request.method === 'OPTIONS') {
-    return new NextResponse('ok', { status: 200 });
-  }
-
   try {
     const requestUrl = new URL(request.url);
     const code = requestUrl.searchParams.get('code');
-    const next = requestUrl.searchParams.get('next') || '/';
 
     if (!code) {
-      throw new Error('No code provided');
+      console.error('No code provided');
+      return NextResponse.redirect(new URL('/?error=missing_code', requestUrl.origin));
     }
 
+    // Create a Supabase client configured to use cookies
     const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({
-      cookies: () => cookieStore,
-    });
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
+    // Exchange the code for a session
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
-      throw error;
+      console.error('Error exchanging code:', error.message);
+      return NextResponse.redirect(new URL(`/?error=${encodeURIComponent(error.message)}`, requestUrl.origin));
     }
 
-    // URL to redirect to after sign in process completes
-    const redirectUrl = new URL(next, requestUrl.origin);
-    return NextResponse.redirect(redirectUrl);
-
+    // Successful authentication, redirect to home page
+    return NextResponse.redirect(new URL('/', requestUrl.origin));
   } catch (error) {
-    console.error('Auth callback error:', error);
-    // Return a more graceful error response
-    const redirectUrl = new URL('/', request.url);
-    redirectUrl.searchParams.set('error', 'auth_callback_failed');
-    return NextResponse.redirect(redirectUrl);
+    console.error('Unexpected error:', error);
+    return NextResponse.redirect(new URL('/?error=unexpected_error', requestUrl.origin));
   }
 }

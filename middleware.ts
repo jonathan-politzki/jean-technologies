@@ -2,23 +2,10 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
-  ],
-  runtime: 'edge',
-};
-
-export async function middleware(req: NextRequest) {
+export async function middleware(request: NextRequest) {
   try {
     const res = NextResponse.next();
-    const supabase = createMiddlewareClient({ req, res });
+    const supabase = createMiddlewareClient({ req: request, res });
     await supabase.auth.getSession();
     return res;
   } catch (error) {
@@ -26,3 +13,15 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 }
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
+};

@@ -33,9 +33,15 @@ export async function generateSemanticLabels(text: string, domain: string): Prom
         content: `Text: "${text}"\nDomain: ${domain}`
       }
     ],
-    response_format: { type: "json_object" },
+    response_format: { type: "json_object" }
   });
 
-  const labels = JSON.parse(response.choices[0].message.content).labels;
-  return labels;
+  // Add null check and type assertion
+  const content = response.choices[0].message.content;
+  if (!content) {
+    throw new Error('No content received from OpenAI');
+  }
+
+  const parsedResponse = JSON.parse(content) as { labels: string[] };
+  return parsedResponse.labels;
 }

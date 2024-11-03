@@ -1,43 +1,31 @@
 'use client';
 
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 export default function Home() {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClientComponentClient()
 
   useEffect(() => {
-    // Check for auth errors in URL
-    const params = new URLSearchParams(window.location.search)
-    const authError = params.get('error')
-    if (authError) {
-      setError(authError)
-      console.error('Auth error:', authError)
-    }
-
     const getUser = async () => {
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        if (sessionError) throw sessionError
-        setUser(session?.user || null)
-      } catch (e) {
-        console.error('Session error:', e)
-        setError('Failed to get user session')
-      } finally {
-        setLoading(false)
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError) {
+        console.error('Session error:', sessionError)
+        setError('Failed to get session')
       }
+      setUser(session?.user ?? null)
+      setLoading(false)
     }
 
     getUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null)
+      setUser(session?.user ?? null)
       router.refresh()
     })
 
@@ -46,6 +34,7 @@ export default function Home() {
 
   const handleSignIn = async () => {
     try {
+      setError(null)
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -53,14 +42,14 @@ export default function Home() {
             access_type: 'offline',
             prompt: 'consent',
           },
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: new URL('/auth/callback', window.location.origin).toString()
         }
       })
 
       if (error) throw error
-    } catch (e) {
-      console.error('Sign in error:', e)
-      setError('Failed to sign in with Google')
+    } catch (error) {
+      console.error('Sign in error:', error)
+      setError('Failed to sign in with Google. Please try again.')
     }
   }
 

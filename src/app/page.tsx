@@ -50,7 +50,7 @@ export default function Home() {
             access_type: 'offline',
             prompt: 'consent',
           },
-          redirectTo: new URL('/auth/callback', window.location.origin).toString()
+          redirectTo: new URL('/api/auth/callback', window.location.origin).toString()
         }
       });
 

@@ -122,4 +122,4 @@ LINKEDIN_CLIENT_SECRET=
 - Use edge functions for performance
 - Keep SDK simple but powerful
 
-This context will be updated as we build. Mark items with [x] as completed.
+This context will be updated as we build. Mark items with [x] as they are completed.

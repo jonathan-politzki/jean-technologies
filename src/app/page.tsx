@@ -90,8 +90,6 @@ export default function Home() {
 
       {user ? (
         <div className="space-y-6 w-full max-w-md">
-          {process.env.NODE_ENV === 'development' && <OAuthDebug />}
-          
           <div className="p-6 bg-white rounded-lg shadow">
             <h2 className="text-xl font-semibold mb-2">Welcome!</h2>
             <p className="text-gray-600">{user.email}</p>

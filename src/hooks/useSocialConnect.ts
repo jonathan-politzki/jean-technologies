@@ -18,34 +18,27 @@ export function useSocialConnect() {
 
             console.log(`[${timestamp}] Initiating ${platform} connection`);
 
-            // Define base options type that matches Supabase's expected structure
-            const baseOptions: {
-                redirectTo: string;
-                scopes: string;
-                queryParams?: Record<string, string>;
-            } = {
+            // Use linkedin_oidc for LinkedIn
+            const provider = platform === 'linkedin' ? 'linkedin_oidc' : platform;
+            
+            const options = {
                 redirectTo: `${window.location.origin}/auth/callback`,
-                scopes: getPlatformScopes(platform)
+                scopes: getPlatformScopes(platform),
+                queryParams: {
+                    prompt: 'consent'
+                }
             };
 
-            // Add LinkedIn-specific options
-            if (platform === 'linkedin') {
-                baseOptions.queryParams = {
-                    response_type: 'code',
-                    prompt: 'consent'
-                };
-            }
-
             console.log(`[${timestamp}] OAuth configuration:`, {
-                provider: platform,
-                redirectTo: baseOptions.redirectTo,
-                scopes: baseOptions.scopes,
-                hasQueryParams: !!baseOptions.queryParams
+                provider,
+                redirectTo: options.redirectTo,
+                scopes: options.scopes,
+                queryParams: options.queryParams
             });
 
             const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
-                provider: platform as Provider,
-                options: baseOptions
+                provider: provider as Provider,
+                options
             });
 
             if (oauthError) {
@@ -72,7 +65,8 @@ export function useSocialConnect() {
 
     const getConnectedPlatforms = async (): Promise<SocialProfile[]> => {
         try {
-            console.log('Fetching connected platforms');
+            const timestamp = new Date().toISOString();
+            console.log(`[${timestamp}] Fetching connected platforms`);
             setLoading(true);
             setError(null);
 
@@ -82,7 +76,7 @@ export function useSocialConnect() {
 
             if (fetchError) throw fetchError;
 
-            console.log('Found platforms:', {
+            console.log(`[${timestamp}] Found platforms:`, {
                 count: data?.length || 0,
                 platforms: data?.map(p => p.platform) || []
             });
@@ -99,7 +93,8 @@ export function useSocialConnect() {
 
     const disconnectPlatform = async (platform: Platform): Promise<void> => {
         try {
-            console.log('Disconnecting platform:', platform);
+            const timestamp = new Date().toISOString();
+            console.log(`[${timestamp}] Disconnecting platform:`, platform);
             setLoading(true);
             setError(null);
 
@@ -110,7 +105,7 @@ export function useSocialConnect() {
 
             if (disconnectError) throw disconnectError;
 
-            console.log('Successfully disconnected:', platform);
+            console.log(`[${timestamp}] Successfully disconnected:`, platform);
         } catch (err) {
             console.error('Disconnect error:', err);
             setError(handleError(err));
@@ -121,11 +116,14 @@ export function useSocialConnect() {
 
     const getPlatformScopes = (platform: Platform): string => {
         const scopes: Record<Platform, string> = {
-            linkedin: 'openid profile w_member_social email',
+            linkedin: 'openid profile email',  // Updated LinkedIn scopes for OIDC
             google: 'profile email',
             github: 'read:user user:email'
         };
-        return scopes[platform] || '';
+        
+        const result = scopes[platform] || '';
+        console.log(`Scopes for ${platform}:`, result);
+        return result;
     };
 
     return {

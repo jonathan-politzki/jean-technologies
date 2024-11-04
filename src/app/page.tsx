@@ -45,10 +45,10 @@ export default function Home() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo: `${window.location.origin}/auth/callback` // Must match route exactly
       }
     });
-    
+      
     if (error) {
       console.error('Sign in error:', error);
       setError('Failed to sign in');

@@ -1,14 +1,16 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { cookies } from 'next/headers';
 import { OpenAI } from 'openai';
+import { getRouteHandler } from '@/lib/supabase/config';
 
-// Only initialize OpenAI if API key exists
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
+
 const openai = process.env.OPENAI_API_KEY 
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
 
 export async function POST(request: Request) {
-  // Check for OpenAI API key before processing
   if (!openai) {
     return NextResponse.json(
       { error: 'OpenAI API key not configured' },
@@ -18,6 +20,8 @@ export async function POST(request: Request) {
 
   try {
     const { userId, domain, query } = await request.json();
+    const cookieStore = cookies();
+    const supabase = getRouteHandler(() => cookieStore);
 
     // 1. Get user's social data
     const { data: profiles } = await supabase
@@ -63,6 +67,7 @@ export async function POST(request: Request) {
     });
 
   } catch (error) {
+    console.error('Understanding generation error:', error);
     return NextResponse.json(
       { error: 'Failed to generate understanding' },
       { status: 500 }

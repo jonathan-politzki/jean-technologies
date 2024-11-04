@@ -1,11 +1,12 @@
-// src/components/OnboardingFlow.tsx
+'use client';
 
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { getClientComponent } from '@/lib/supabase/config';
 
 export function OnboardingFlow() {
   const [socialUrl, setSocialUrl] = useState('');
   const [platform, setPlatform] = useState<'instagram' | 'twitter'>('instagram');
+  const supabase = getClientComponent();
 
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({

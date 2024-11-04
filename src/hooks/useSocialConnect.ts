@@ -1,4 +1,7 @@
-// src/hooks/useSocialConnect.ts
+import { useState } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { Platform, SocialProfile } from '@/lib/types';
+import { handleError } from '@/utils/errors';
 
 export function useSocialConnect() {
     const [loading, setLoading] = useState(false);

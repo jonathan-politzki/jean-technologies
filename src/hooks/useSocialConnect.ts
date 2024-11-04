@@ -1,3 +1,4 @@
+// src/hooks/useSocialConnect.ts
 import { useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Platform, SocialProfile } from '@/lib/types';
@@ -12,49 +13,78 @@ export function useSocialConnect() {
     const connectPlatform = async (platform: Platform): Promise<void> => {
         try {
             const timestamp = new Date().toISOString();
-            console.log(`[${timestamp}] Connecting platform:`, {
-                platform,
-                clientId: process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID ? 'configured' : 'missing',
-                redirectUrl: `${window.location.origin}/auth/callback`
-            });
-
             setLoading(true);
             setError(null);
 
-            const options = {
-                redirectTo: `${window.location.origin}/auth/callback`,
-                scopes: getPlatformScopes(platform),
-                queryParams: platform === 'linkedin' ? {
-                    client_id: process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID,
-                    response_type: 'code',
-                    prompt: 'consent',
-                } : undefined
-            };
+            const redirectUrl = `${window.location.origin}/auth/callback`;
+            const supabaseCallbackUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/callback`;
 
-            console.log(`[${timestamp}] OAuth options:`, {
-                scopes: options.scopes,
-                hasQueryParams: !!options.queryParams
+            console.log(`[${timestamp}] Initiating ${platform} connection:`, {
+                platform,
+                redirectUrl,
+                supabaseCallbackUrl,
+                clientId: platform === 'linkedin' ? (process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID ? 'configured' : 'missing') : 'n/a'
             });
 
-            const { data, error } = await supabase.auth.signInWithOAuth({
+            let options = {
+                redirectTo: redirectUrl,
+                scopes: getPlatformScopes(platform)
+            };
+
+            if (platform === 'linkedin') {
+                // Only add LinkedIn specific options if clientId is available
+                const clientId = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID;
+                if (!clientId) {
+                    console.warn(`[${timestamp}] LinkedIn client ID not configured`);
+                }
+
+                options = {
+                    ...options,
+                    queryParams: {
+                        response_type: 'code',
+                        prompt: 'consent'
+                    }
+                };
+            }
+
+            console.log(`[${timestamp}] OAuth configuration:`, {
+                provider: platform,
+                scopes: options.scopes,
+                options: {
+                    ...options,
+                    queryParams: options.queryParams ? 'configured' : 'not needed'
+                }
+            });
+
+            const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
                 provider: platform as Provider,
                 options
             });
 
-            console.log(`[${timestamp}] OAuth response:`, {
-                success: !error,
-                hasData: !!data,
-                url: data?.url,
-                error: error?.message
-            });
+            if (oauthError) {
+                console.error(`[${timestamp}] OAuth error:`, {
+                    code: oauthError.code,
+                    message: oauthError.message,
+                    status: oauthError.status
+                });
+                throw oauthError;
+            }
 
-            if (error) throw error;
+            console.log(`[${timestamp}] OAuth success:`, {
+                hasData: !!data,
+                url: data?.url ? 'provided' : 'missing',
+                provider: platform
+            });
 
         } catch (err) {
             const timestamp = new Date().toISOString();
             console.error(`[${timestamp}] Connection error:`, {
-                message: err instanceof Error ? err.message : 'Unknown error',
-                stack: err instanceof Error ? err.stack : undefined
+                error: err instanceof Error ? {
+                    name: err.name,
+                    message: err.message,
+                    stack: err.stack
+                } : 'Unknown error type',
+                platform
             });
             setError(handleError(err));
         } finally {
@@ -62,37 +92,30 @@ export function useSocialConnect() {
         }
     };
 
-    const getPlatformScopes = (platform: Platform): string => {
-        const scopes = {
-            linkedin: 'openid profile email',  // Updated LinkedIn scopes
-            google: 'profile email',
-            github: 'read:user user:email'
-        };
-        
-        const result = scopes[platform] || '';
-        console.log(`Scopes for ${platform}:`, result);
-        return result;
-    };
-
     const getConnectedPlatforms = async (): Promise<SocialProfile[]> => {
+        const timestamp = new Date().toISOString();
         try {
-            console.log('Fetching connected platforms');
+            console.log(`[${timestamp}] Fetching connected platforms`);
             setLoading(true);
             setError(null);
 
-            const { data, error } = await supabase
+            const { data, error: fetchError } = await supabase
                 .from('social_profiles')
                 .select('*');
 
-            if (error) throw error;
-            
-            console.log('Connected platforms:', {
-                count: data?.length
+            if (fetchError) {
+                console.error(`[${timestamp}] Fetch error:`, fetchError);
+                throw fetchError;
+            }
+
+            console.log(`[${timestamp}] Found platforms:`, {
+                count: data?.length || 0,
+                platforms: data?.map(p => p.platform) || []
             });
-            
+
             return data || [];
         } catch (err) {
-            console.error('Get platforms error:', err);
+            console.error(`[${timestamp}] Get platforms error:`, err);
             setError(handleError(err));
             return [];
         } finally {
@@ -101,25 +124,41 @@ export function useSocialConnect() {
     };
 
     const disconnectPlatform = async (platform: Platform): Promise<void> => {
+        const timestamp = new Date().toISOString();
         try {
-            console.log(`Disconnecting platform: ${platform}`);
+            console.log(`[${timestamp}] Disconnecting platform:`, platform);
             setLoading(true);
             setError(null);
 
-            const { error } = await supabase
+            const { error: disconnectError } = await supabase
                 .from('social_profiles')
                 .delete()
                 .eq('platform', platform);
 
-            if (error) throw error;
-            
-            console.log(`Successfully disconnected ${platform}`);
+            if (disconnectError) {
+                console.error(`[${timestamp}] Disconnect error:`, disconnectError);
+                throw disconnectError;
+            }
+
+            console.log(`[${timestamp}] Successfully disconnected:`, platform);
         } catch (err) {
-            console.error('Disconnect error:', err);
+            console.error(`[${timestamp}] Disconnect error:`, err);
             setError(handleError(err));
         } finally {
             setLoading(false);
         }
+    };
+
+    const getPlatformScopes = (platform: Platform): string => {
+        const scopes: Record<Platform, string> = {
+            linkedin: 'openid profile w_member_social email',
+            google: 'profile email',
+            github: 'read:user user:email'
+        };
+
+        const scopeString = scopes[platform] || '';
+        console.log(`Platform scopes for ${platform}:`, scopeString);
+        return scopeString;
     };
 
     return {

@@ -27,10 +27,11 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.redirect(new URL('/', requestUrl.origin));
-  } catch (error) {
+  } catch (error: any) {
     console.error('Detailed auth error:', error);
+    const errorMessage = error?.message || 'Unknown error occurred';
     return NextResponse.redirect(
-      new URL(`/?error=${encodeURIComponent(error.message)}`, request.url)
+      new URL(`/?error=${encodeURIComponent(errorMessage)}`, request.url)
     );
   }
 }

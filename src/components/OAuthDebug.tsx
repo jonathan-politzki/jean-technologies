@@ -2,8 +2,8 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useEffect, useState } from 'react';
 
-export function OAuthDebug() {
-  const [config, setConfig] = useState<any>(null);
+export default function OAuthDebug() {
+    const [config, setConfig] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const supabase = createClientComponentClient();
 

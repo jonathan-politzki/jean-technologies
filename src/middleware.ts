@@ -12,9 +12,14 @@ export function middleware(request: NextRequest) {
   
   console.error('🚨 Auth Debug:', JSON.stringify(requestInfo, null, 2));
   
-  return NextResponse.next();
+  const response = NextResponse.next();
+  response.headers.set('Cache-Control', 'no-store, max-age=0');
+  return response;
 }
 
 export const config = {
-  matcher: ['/auth/callback']
+  matcher: [
+    '/auth/callback',
+    '/api/auth/callback'
+  ]
 }; 

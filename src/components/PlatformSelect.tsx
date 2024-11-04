@@ -6,10 +6,30 @@ interface Props {
   onDisconnect: (platform: Platform) => void;
 }
 
-const PLATFORMS: { id: Platform; name: string; icon: string }[] = [
-  { id: 'google', name: 'Google', icon: '🌐' },
-  { id: 'github', name: 'GitHub', icon: '💻' },
-  { id: 'linkedin', name: 'LinkedIn', icon: '🔗' }
+const PLATFORMS: { 
+  id: Platform; 
+  name: string; 
+  icon: string;
+  description: string;
+}[] = [
+  { 
+    id: 'google', 
+    name: 'Google', 
+    icon: '🌐',
+    description: 'Connect your Google account'
+  },
+  { 
+    id: 'github', 
+    name: 'GitHub', 
+    icon: '💻',
+    description: 'Connect your GitHub profile'
+  },
+  { 
+    id: 'linkedin', 
+    name: 'LinkedIn', 
+    icon: '🔗',
+    description: 'Connect your professional profile'
+  }
 ];
 
 export function PlatformSelect({ connectedPlatforms, onConnect, onDisconnect }: Props) {

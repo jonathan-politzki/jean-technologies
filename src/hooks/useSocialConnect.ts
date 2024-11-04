@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { Platform, SocialProfile } from '../lib/types';
 import { handleError } from '../utils/errors';
 import { Provider } from '@supabase/supabase-js';
+import { LINKEDIN_CONFIG } from '../config/auth';
 
 export function useSocialConnect() {
   const [loading, setLoading] = useState(false);
@@ -87,7 +88,7 @@ export function useSocialConnect() {
 function getPlatformScopes(platform: Platform): string {
   switch (platform) {
     case 'linkedin':
-      return 'r_liteprofile r_emailaddress';
+      return LINKEDIN_CONFIG.scope.join(' ');
     case 'github':
       return 'read:user user:email';
     case 'google':

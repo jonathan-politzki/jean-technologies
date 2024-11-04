@@ -3,6 +3,25 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { Configuration, OpenAIApi } from 'https://esm.sh/openai@3.1.0'
 import { corsHeaders } from '../_shared/cors.ts'
 
+// Add helper function at the top
+async function processLinkedInContext(profileData: LinkedInProfile) {
+  return {
+    professional_context: {
+      roles: profileData.positions.map(p => ({
+        title: p.title,
+        company: p.company,
+        duration: `${p.startDate} - ${p.endDate || 'present'}`
+      })),
+      skills: profileData.skills.map(s => ({
+        name: s.name,
+        endorsements: s.endorsementCount
+      })),
+      name: `${profileData.firstName} ${profileData.lastName}`,
+      email: profileData.email
+    }
+  };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -32,14 +51,25 @@ serve(async (req) => {
     if (profileError) throw profileError
 
     // Combine profile data
-    const context = profiles
-      .map(p => JSON.stringify(p.profile_data))
-      .join('\n')
+    const context = await Promise.all(profiles.map(async p => {
+      const data = p.profile_data;
+      switch (p.platform) {
+        case 'linkedin':
+          return processLinkedInContext(data);
+        default:
+          return JSON.stringify(data);
+      }
+    }));
+
+    const combinedContext = context
+      .filter(Boolean)
+      .map(c => JSON.stringify(c))
+      .join('\n');
 
     // Generate embedding for the combined context
     const embeddingResponse = await openai.createEmbedding({
       model: 'text-embedding-3-large',
-      input: context,
+      input: combinedContext,
     })
 
     const [{ embedding }] = embeddingResponse.data.data
@@ -55,7 +85,7 @@ serve(async (req) => {
         },
         {
           role: 'user',
-          content: `User Data: ${context}\nDomain: ${domain}\nQuery: ${query}`
+          content: `User Data: ${combinedContext}\nDomain: ${domain}\nQuery: ${query}`
         }
       ],
       response_format: { type: 'json_object' }

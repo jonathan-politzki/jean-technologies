@@ -16,49 +16,36 @@ export function useSocialConnect() {
             setLoading(true);
             setError(null);
 
-            const redirectUrl = `${window.location.origin}/auth/callback`;
-            const supabaseCallbackUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/callback`;
+            console.log(`[${timestamp}] Initiating ${platform} connection`);
 
-            console.log(`[${timestamp}] Initiating ${platform} connection:`, {
-                platform,
-                redirectUrl,
-                supabaseCallbackUrl,
-                clientId: platform === 'linkedin' ? (process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID ? 'configured' : 'missing') : 'n/a'
-            });
-
-            let options = {
-                redirectTo: redirectUrl,
+            // Define base options type that matches Supabase's expected structure
+            const baseOptions: {
+                redirectTo: string;
+                scopes: string;
+                queryParams?: Record<string, string>;
+            } = {
+                redirectTo: `${window.location.origin}/auth/callback`,
                 scopes: getPlatformScopes(platform)
             };
 
+            // Add LinkedIn-specific options
             if (platform === 'linkedin') {
-                // Only add LinkedIn specific options if clientId is available
-                const clientId = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID;
-                if (!clientId) {
-                    console.warn(`[${timestamp}] LinkedIn client ID not configured`);
-                }
-
-                options = {
-                    ...options,
-                    queryParams: {
-                        response_type: 'code',
-                        prompt: 'consent'
-                    }
+                baseOptions.queryParams = {
+                    response_type: 'code',
+                    prompt: 'consent'
                 };
             }
 
             console.log(`[${timestamp}] OAuth configuration:`, {
                 provider: platform,
-                scopes: options.scopes,
-                options: {
-                    ...options,
-                    queryParams: options.queryParams ? 'configured' : 'not needed'
-                }
+                redirectTo: baseOptions.redirectTo,
+                scopes: baseOptions.scopes,
+                hasQueryParams: !!baseOptions.queryParams
             });
 
             const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
                 provider: platform as Provider,
-                options
+                options: baseOptions
             });
 
             if (oauthError) {
@@ -72,20 +59,11 @@ export function useSocialConnect() {
 
             console.log(`[${timestamp}] OAuth success:`, {
                 hasData: !!data,
-                url: data?.url ? 'provided' : 'missing',
-                provider: platform
+                url: data?.url ? 'provided' : 'missing'
             });
 
         } catch (err) {
-            const timestamp = new Date().toISOString();
-            console.error(`[${timestamp}] Connection error:`, {
-                error: err instanceof Error ? {
-                    name: err.name,
-                    message: err.message,
-                    stack: err.stack
-                } : 'Unknown error type',
-                platform
-            });
+            console.error('Connection error:', err);
             setError(handleError(err));
         } finally {
             setLoading(false);
@@ -93,9 +71,8 @@ export function useSocialConnect() {
     };
 
     const getConnectedPlatforms = async (): Promise<SocialProfile[]> => {
-        const timestamp = new Date().toISOString();
         try {
-            console.log(`[${timestamp}] Fetching connected platforms`);
+            console.log('Fetching connected platforms');
             setLoading(true);
             setError(null);
 
@@ -103,19 +80,16 @@ export function useSocialConnect() {
                 .from('social_profiles')
                 .select('*');
 
-            if (fetchError) {
-                console.error(`[${timestamp}] Fetch error:`, fetchError);
-                throw fetchError;
-            }
+            if (fetchError) throw fetchError;
 
-            console.log(`[${timestamp}] Found platforms:`, {
+            console.log('Found platforms:', {
                 count: data?.length || 0,
                 platforms: data?.map(p => p.platform) || []
             });
 
             return data || [];
         } catch (err) {
-            console.error(`[${timestamp}] Get platforms error:`, err);
+            console.error('Get platforms error:', err);
             setError(handleError(err));
             return [];
         } finally {
@@ -124,9 +98,8 @@ export function useSocialConnect() {
     };
 
     const disconnectPlatform = async (platform: Platform): Promise<void> => {
-        const timestamp = new Date().toISOString();
         try {
-            console.log(`[${timestamp}] Disconnecting platform:`, platform);
+            console.log('Disconnecting platform:', platform);
             setLoading(true);
             setError(null);
 
@@ -135,14 +108,11 @@ export function useSocialConnect() {
                 .delete()
                 .eq('platform', platform);
 
-            if (disconnectError) {
-                console.error(`[${timestamp}] Disconnect error:`, disconnectError);
-                throw disconnectError;
-            }
+            if (disconnectError) throw disconnectError;
 
-            console.log(`[${timestamp}] Successfully disconnected:`, platform);
+            console.log('Successfully disconnected:', platform);
         } catch (err) {
-            console.error(`[${timestamp}] Disconnect error:`, err);
+            console.error('Disconnect error:', err);
             setError(handleError(err));
         } finally {
             setLoading(false);
@@ -155,10 +125,7 @@ export function useSocialConnect() {
             google: 'profile email',
             github: 'read:user user:email'
         };
-
-        const scopeString = scopes[platform] || '';
-        console.log(`Platform scopes for ${platform}:`, scopeString);
-        return scopeString;
+        return scopes[platform] || '';
     };
 
     return {

@@ -42,22 +42,16 @@ export default function Home() {
   }, [supabase, router]);
 
   const handleSignIn = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-          redirectTo: new URL('/auth/callback', window.location.origin).toString()
-        }
-      });
-
-      if (error) throw error;
-    } catch (e) {
-      console.error('Sign in error:', e);
-      setError('Failed to sign in with Google');
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
+    });
+    
+    if (error) {
+      console.error('Sign in error:', error);
+      setError('Failed to sign in');
     }
   };
 

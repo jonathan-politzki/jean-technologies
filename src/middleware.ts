@@ -1,16 +1,17 @@
+// src/middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getMiddlewareClient } from '@/lib/supabase/config';
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 
 export async function middleware(request: NextRequest) {
   try {
     const res = NextResponse.next();
-    const supabase = getMiddlewareClient(request, res);
+    const supabase = createMiddlewareClient({ 
+      req: request, 
+      res
+    });
     
-    // Refresh session if needed
     await supabase.auth.getSession();
-    
-    // Add cache control headers
     res.headers.set('Cache-Control', 'no-store, max-age=0');
     
     return res;

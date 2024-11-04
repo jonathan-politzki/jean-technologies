@@ -1,6 +1,7 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { handleError } from '@/utils/errors';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,14 +34,16 @@ export async function GET(request: Request) {
     if (error) throw error;
 
     return NextResponse.redirect(new URL('/', requestUrl.origin));
-  } catch (error) {
+  } catch (error: unknown) {
+    const jeanError = handleError(error);
     console.error('Auth callback error:', {
-      message: error.message,
-      stack: error.stack
+      code: jeanError.code,
+      message: jeanError.message,
+      statusCode: jeanError.statusCode
     });
     
     return NextResponse.redirect(
-      new URL(`/?error=${encodeURIComponent(error.message)}`, requestUrl.origin)
+      new URL(`/?error=${encodeURIComponent(jeanError.message)}`, requestUrl.origin)
     );
   }
 }

@@ -1,6 +1,7 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { AuthenticationError, handleError } from '@/utils/errors';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
     console.log('Auth code received:', code ? 'yes' : 'no');
 
     if (!code) {
-      throw new Error('No code provided');
+      throw new AuthenticationError('No code provided');
     }
 
     const cookieStore = cookies();
@@ -23,15 +24,15 @@ export async function GET(request: Request) {
     console.log('Exchange completed:', error ? 'with error' : 'success');
 
     if (error) {
-      throw error;
+      throw new AuthenticationError(error.message);
     }
 
     return NextResponse.redirect(new URL('/', requestUrl.origin));
-  } catch (error: any) {
-    console.error('Detailed auth error:', error);
-    const errorMessage = error?.message || 'Unknown error occurred';
+  } catch (error) {
+    const jeanError = handleError(error);
+    console.error('Detailed auth error:', jeanError);
     return NextResponse.redirect(
-      new URL(`/?error=${encodeURIComponent(errorMessage)}`, request.url)
+      new URL(`/?error=${encodeURIComponent(jeanError.message)}`, request.url)
     );
   }
 }

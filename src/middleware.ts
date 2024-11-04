@@ -18,12 +18,16 @@ export function middleware(request: NextRequest) {
   };
   
   console.log('🔍 Request Debug:', JSON.stringify(requestInfo, null, 2));
-  return NextResponse.next();
+  
+  const response = NextResponse.next();
+  response.headers.set('Cache-Control', 'no-store, max-age=0');
+  return response;
 }
 
 // Match ALL routes to debug the full request flow
 export const config = {
   matcher: [
+    '/auth/callback',
     '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }; 

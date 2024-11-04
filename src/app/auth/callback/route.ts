@@ -36,7 +36,11 @@ export async function GET(request: Request) {
 
     if (error) throw error;
 
-    return NextResponse.redirect(new URL('/', requestUrl.origin));
+    return NextResponse.redirect(new URL('/', requestUrl.origin), {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      }
+    });
   } catch (error: unknown) {
     const jeanError = handleError(error);
     console.error('Auth callback error:', {
@@ -46,7 +50,12 @@ export async function GET(request: Request) {
     });
     
     return NextResponse.redirect(
-      new URL(`/?error=${encodeURIComponent(jeanError.message)}`, requestUrl.origin)
+      new URL(`/?error=${encodeURIComponent(jeanError.message)}`, requestUrl.origin),
+      {
+        headers: {
+          'Cache-Control': 'no-store, max-age=0',
+        }
+      }
     );
   }
 }

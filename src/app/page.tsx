@@ -16,44 +16,53 @@ export default function Home() {
   const supabase = createClientComponentClient();
 
   useEffect(() => {
-    // Handle initial session and auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user || null);
-      
-      if (session?.user) {
-        // Fetch social profile when user is authenticated
-        const { data: profile, error: profileError } = await supabase
-          .from('social_profiles')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single();
-          
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.error('Profile fetch error:', profileError);
+    const handleSession = async () => {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          throw sessionError;
         }
         
-        setSocialProfile(profile);
-      } else {
-        setSocialProfile(null);
+        if (session?.user) {
+          setUser(session.user);
+          
+          const { data: profile, error: profileError } = await supabase
+            .from('social_profiles')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single();
+            
+          if (profileError && profileError.code !== 'PGRST116') {
+            throw profileError;
+          }
+          
+          setSocialProfile(profile);
+        }
+      } catch (e) {
+        console.error('Session error:', e);
+        setError('Failed to get session');
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
-    });
+    };
 
-    // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    handleSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
-      setLoading(false);
+      router.refresh();
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase]);
+  }, [supabase, router]);
 
   const handleSignIn = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo: `${window.location.origin}/auth/callback` // Must match route exactly
       }
     });
       

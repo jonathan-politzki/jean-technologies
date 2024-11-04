@@ -8,9 +8,12 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
-  console.log({
-    type: 'auth-callback-entry',
+  console.log('🎯 Auth Callback Handler:', {
+    type: 'entry',
+    timestamp: new Date().toISOString(),
     url: request.url,
+    pathname: requestUrl.pathname,
+    search: requestUrl.search,
     code: requestUrl.searchParams.get('code'),
     headers: Object.fromEntries(request.headers)
   });

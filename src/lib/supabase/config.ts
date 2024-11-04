@@ -1,11 +1,10 @@
 // src/lib/supabase/config.ts
-
 import { createClient } from '@supabase/supabase-js'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import type { NextRequest, NextResponse } from 'next/server'
-import type { CookieOptions } from '@supabase/auth-helpers-nextjs'
+import type { CookieOptions as NextCookieOptions } from 'next/dist/server/web/spec-extension/cookies'
 
 const SUPABASE_AUTH_CONFIG = {
   auth: {
@@ -53,7 +52,7 @@ export function getMiddlewareClient(req: NextRequest, res: NextResponse) {
   })
 }
 
-export function getRouteHandler(cookies: () => CookieOptions['cookies']) {
+export function getRouteHandler(cookies: () => NonNullable<Parameters<typeof createRouteHandlerClient>[0]>['cookies']) {
   return createRouteHandlerClient({ 
     cookies,
     options: {

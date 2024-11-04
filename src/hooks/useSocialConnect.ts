@@ -11,37 +11,67 @@ export function useSocialConnect() {
 
     const connectPlatform = async (platform: Platform): Promise<void> => {
         try {
-            console.log(`[${new Date().toISOString()}] Connecting ${platform}`);
+            const timestamp = new Date().toISOString();
+            console.log(`[${timestamp}] Connecting platform:`, {
+                platform,
+                clientId: process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID ? 'configured' : 'missing',
+                redirectUrl: `${window.location.origin}/auth/callback`
+            });
+
             setLoading(true);
             setError(null);
 
-            const { data, error } = await supabase.auth.signInWithOAuth({
-                provider: platform as Provider,
-                options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
-                    scopes: getPlatformScopes(platform),
-                    queryParams: {
-                        prompt: 'consent'
-                    }
-                }
+            const options = {
+                redirectTo: `${window.location.origin}/auth/callback`,
+                scopes: getPlatformScopes(platform),
+                queryParams: platform === 'linkedin' ? {
+                    client_id: process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID,
+                    response_type: 'code',
+                    prompt: 'consent',
+                } : undefined
+            };
+
+            console.log(`[${timestamp}] OAuth options:`, {
+                scopes: options.scopes,
+                hasQueryParams: !!options.queryParams
             });
 
-            console.log('OAuth response:', {
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: platform as Provider,
+                options
+            });
+
+            console.log(`[${timestamp}] OAuth response:`, {
                 success: !error,
                 hasData: !!data,
-                url: data?.url
+                url: data?.url,
+                error: error?.message
             });
 
             if (error) throw error;
 
         } catch (err) {
-            console.error('Connection error:', {
-                message: err instanceof Error ? err.message : 'Unknown error'
+            const timestamp = new Date().toISOString();
+            console.error(`[${timestamp}] Connection error:`, {
+                message: err instanceof Error ? err.message : 'Unknown error',
+                stack: err instanceof Error ? err.stack : undefined
             });
             setError(handleError(err));
         } finally {
             setLoading(false);
         }
+    };
+
+    const getPlatformScopes = (platform: Platform): string => {
+        const scopes = {
+            linkedin: 'openid profile email',  // Updated LinkedIn scopes
+            google: 'profile email',
+            github: 'read:user user:email'
+        };
+        
+        const result = scopes[platform] || '';
+        console.log(`Scopes for ${platform}:`, result);
+        return result;
     };
 
     const getConnectedPlatforms = async (): Promise<SocialProfile[]> => {
@@ -99,16 +129,4 @@ export function useSocialConnect() {
         loading,
         error
     };
-}
-
-function getPlatformScopes(platform: Platform): string {
-    const scopes = {
-        linkedin: 'openid profile w_member_social email',
-        google: 'profile email',
-        github: 'read:user user:email'
-    };
-    
-    const result = scopes[platform] || '';
-    console.log(`Scopes for ${platform}:`, result);
-    return result;
 }

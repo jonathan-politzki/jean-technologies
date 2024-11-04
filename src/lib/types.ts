@@ -11,11 +11,26 @@ export interface User {
 // Social Types
 export type Platform = 'google' | 'github' | 'linkedin';
 
+export interface LinkedInPosition {
+  title: string;
+  company: string;
+  startDate: string;
+  endDate?: string;
+}
+
+export interface LinkedInSkill {
+  name: string;
+  endorsementCount?: number;
+}
+
 export interface LinkedInProfile {
   id: string;
+  firstName: string;
+  lastName: string;
+  profilePicture?: string;
   email?: string;
-  name?: string;
-  picture?: string;
+  positions?: LinkedInPosition[];
+  skills?: LinkedInSkill[];
 }
 
 export interface SocialProfile {

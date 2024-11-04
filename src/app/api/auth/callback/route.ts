@@ -2,13 +2,15 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-// Switch to nodejs runtime
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+  console.log('Auth callback received:', request.url);
   try {
     const requestUrl = new URL(request.url);
     const code = requestUrl.searchParams.get('code');
+    console.log('Auth code received:', code ? 'yes' : 'no');
 
     if (!code) {
       throw new Error('No code provided');
@@ -17,33 +19,18 @@ export async function GET(request: Request) {
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     
-    // Exchange the code for a session
     const { error } = await supabase.auth.exchangeCodeForSession(code);
+    console.log('Exchange completed:', error ? 'with error' : 'success');
 
     if (error) {
       throw error;
     }
 
-    return NextResponse.redirect(new URL('/', requestUrl.origin), {
-      status: 302,
-      headers: {
-        'Cache-Control': 'no-store, max-age=0'
-      }
-    });
-
+    return NextResponse.redirect(new URL('/', requestUrl.origin));
   } catch (error) {
-    console.error('Auth error:', error);
-    const baseUrl = new URL(request.url).origin;
-    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-    
+    console.error('Detailed auth error:', error);
     return NextResponse.redirect(
-      new URL(`/?error=${encodeURIComponent(errorMsg)}`, baseUrl),
-      {
-        status: 302,
-        headers: {
-          'Cache-Control': 'no-store, max-age=0'
-        }
-      }
+      new URL(`/?error=${encodeURIComponent(error.message)}`, request.url)
     );
   }
 }

@@ -23,19 +23,37 @@ export default function ConnectFlow({
   }, []);
 
   const loadConnectedPlatforms = async () => {
-    const platforms = await getConnectedPlatforms();
-    setConnectedPlatforms(platforms);
-    onProfileUpdate(platforms[0] || null);
+    try {
+      console.log('Loading connected platforms for user:', userId);
+      const platforms = await getConnectedPlatforms();
+      console.log('Loaded platforms:', platforms);
+      setConnectedPlatforms(platforms);
+      onProfileUpdate(platforms[0] || null);
+    } catch (err) {
+      console.error('Error loading platforms:', err);
+    }
   };
 
   const handleConnect = async (platform: Platform) => {
-    await connectPlatform(platform);
-    await loadConnectedPlatforms();
+    try {
+      console.log(`Initiating ${platform} connection`);
+      await connectPlatform(platform);
+      console.log('Connection successful, reloading platforms');
+      await loadConnectedPlatforms();
+    } catch (err) {
+      console.error(`${platform} connection error:`, err);
+    }
   };
 
   const handleDisconnect = async (platform: Platform) => {
-    await disconnectPlatform(platform);
-    await loadConnectedPlatforms();
+    try {
+      console.log(`Disconnecting ${platform}`);
+      await disconnectPlatform(platform);
+      console.log('Disconnection successful, reloading platforms');
+      await loadConnectedPlatforms();
+    } catch (err) {
+      console.error(`${platform} disconnection error:`, err);
+    }
   };
 
   if (loading) {

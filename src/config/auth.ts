@@ -7,7 +7,7 @@ export const GOOGLE_CONFIG = {
 export const LINKEDIN_CONFIG = {
     clientId: process.env.LINKEDIN_CLIENT_ID,
     clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
-    scope: ['r_liteprofile', 'r_emailaddress', 'w_member_social'],
+    scope: ['openid', 'profile', 'email'],
     redirectUri: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback`
 };
   

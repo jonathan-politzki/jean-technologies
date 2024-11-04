@@ -4,9 +4,12 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { SocialProfile } from '@/lib/types';
+import ConnectFlow from '@/components/ConnectFlow';
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
+  const [socialProfile, setSocialProfile] = useState<SocialProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -20,7 +23,21 @@ export default function Home() {
           throw sessionError;
         }
         
-        setUser(session?.user || null);
+        if (session?.user) {
+          setUser(session.user);
+          
+          const { data: profile, error: profileError } = await supabase
+            .from('social_profiles')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single();
+            
+          if (profileError && profileError.code !== 'PGRST116') {
+            throw profileError;
+          }
+          
+          setSocialProfile(profile);
+        }
       } catch (e) {
         console.error('Session error:', e);
         setError('Failed to get session');
@@ -72,12 +89,29 @@ export default function Home() {
       )}
 
       {user ? (
-        <div className="p-4 bg-white rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-2">Welcome!</h2>
-          <p className="text-gray-600">{user.email}</p>
+        <div className="space-y-6 w-full max-w-md">
+          <div className="p-6 bg-white rounded-lg shadow">
+            <h2 className="text-xl font-semibold mb-2">Welcome!</h2>
+            <p className="text-gray-600">{user.email}</p>
+            
+            {!socialProfile && (
+              <div className="mt-4 p-4 bg-yellow-50 rounded-md">
+                <p className="text-sm text-yellow-700">
+                  Complete your profile by connecting a social account
+                </p>
+              </div>
+            )}
+          </div>
+          
+          <ConnectFlow 
+            userId={user.id} 
+            existingProfile={socialProfile}
+            onProfileUpdate={setSocialProfile}
+          />
+
           <button
             onClick={() => supabase.auth.signOut()}
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+            className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
           >
             Sign Out
           </button>

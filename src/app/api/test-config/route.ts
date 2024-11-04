@@ -7,29 +7,45 @@ export async function GET() {
   try {
     const supabase = createRouteHandlerClient({ cookies });
     
-    // Test Supabase auth settings
-    const { data: providers } = await supabase
+    // Test provider configuration
+    const { data, error } = await supabase
       .from('auth.providers')
       .select('*')
-      .eq('provider', 'linkedin')
+      .filter('provider', 'eq', 'linkedin')
       .single();
 
+    // Current deployment info
+    const deploymentUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}`
+      : process.env.NEXT_PUBLIC_BASE_URL;
+
     return NextResponse.json({
-      supabase: {
-        url: process.env.NEXT_PUBLIC_SUPABASE_URL,
-        anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'present' : 'missing',
-        provider: providers || 'not found'
-      },
-      linkedin: {
-        clientId: process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID,
-        clientSecret: process.env.LINKEDIN_CLIENT_SECRET ? 'present' : 'missing'
-      },
-      environment: process.env.NODE_ENV,
-      auth: {
-        callbackUrl: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/callback`
+      status: 'success',
+      config: {
+        supabase: {
+          url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+          hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+          linkedinProvider: data || 'not found'
+        },
+        linkedin: {
+          hasClientId: !!process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID,
+          hasClientSecret: !!process.env.LINKEDIN_CLIENT_SECRET
+        },
+        deployment: {
+          url: deploymentUrl,
+          environment: process.env.NODE_ENV,
+          vercelUrl: process.env.VERCEL_URL
+        }
       }
     });
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    console.error('Config test error:', error);
+    return NextResponse.json({ 
+      status: 'error',
+      error: String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    }, { 
+      status: 500 
+    });
   }
 }

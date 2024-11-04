@@ -13,20 +13,9 @@ export type Platform = 'google' | 'github' | 'linkedin';
 
 export interface LinkedInProfile {
   id: string;
-  firstName: string;
-  lastName: string;
-  profilePicture?: string;
   email?: string;
-  positions: Array<{
-    title: string;
-    company: string;
-    startDate: string;
-    endDate?: string;
-  }>;
-  skills: Array<{
-    name: string;
-    endorsementCount: number;
-  }>;
+  name?: string;
+  picture?: string;
 }
 
 export interface SocialProfile {

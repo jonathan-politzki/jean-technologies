@@ -6,10 +6,15 @@ import { UserInsights } from './UserInsights';
 
 interface Props {
   userId: string;
-  onComplete?: () => void;
+  existingProfile: SocialProfile | null;
+  onProfileUpdate: (profile: SocialProfile | null) => void;
 }
 
-export function ConnectFlow({ userId, onComplete }: Props) {
+export default function ConnectFlow({ 
+  userId, 
+  existingProfile, 
+  onProfileUpdate 
+}: Props) {
   const [connectedPlatforms, setConnectedPlatforms] = useState<SocialProfile[]>([]);
   const { connectPlatform, getConnectedPlatforms, disconnectPlatform, loading, error } = useSocialConnect();
 
@@ -20,12 +25,12 @@ export function ConnectFlow({ userId, onComplete }: Props) {
   const loadConnectedPlatforms = async () => {
     const platforms = await getConnectedPlatforms();
     setConnectedPlatforms(platforms);
+    onProfileUpdate(platforms[0] || null);
   };
 
   const handleConnect = async (platform: Platform) => {
     await connectPlatform(platform);
     await loadConnectedPlatforms();
-    onComplete?.();
   };
 
   const handleDisconnect = async (platform: Platform) => {

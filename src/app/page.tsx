@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { SocialProfile } from '@/lib/types';
 import ConnectFlow from '@/components/ConnectFlow';
-import OAuthDebug from '@/components/OAuthDebug';
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);

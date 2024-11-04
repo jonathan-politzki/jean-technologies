@@ -1,7 +1,8 @@
+// src/app/api/understand/route.ts
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { OpenAI } from 'openai';
-import { getRouteHandler } from '@/lib/supabase/config';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
@@ -20,10 +21,21 @@ export async function POST(request: Request) {
 
   try {
     const { userId, domain, query } = await request.json();
-    const cookieStore = cookies();
-    const supabase = getRouteHandler(() => cookieStore);
+    
+    // Create Supabase client directly
+    const supabase = createRouteHandlerClient({ 
+      cookies,
+      options: {
+        auth: {
+          flowType: 'pkce',
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          persistSession: true
+        }
+      }
+    });
 
-    // 1. Get user's social data
+    // Rest of your code...
     const { data: profiles } = await supabase
       .from('social_profiles')
       .select('*')
@@ -37,37 +49,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Generate embedding from social context
-    const embedding = await openai.embeddings.create({
-      model: "text-embedding-3-large",
-      input: `User Profile URL: ${profiles.profile_url}\nQuery: ${query}\nDomain: ${domain}`
-    });
-
-    // 3. Store embedding
-    const { data: storedEmbedding, error: storageError } = await supabase
-      .from('embeddings')
-      .insert({
-        user_id: userId,
-        domain,
-        embedding: embedding.data[0].embedding,
-        metadata: {
-          query,
-          confidence: 0.85,
-          generated_at: new Date().toISOString()
-        }
-      })
-      .select()
-      .single();
-
-    if (storageError) throw storageError;
-
-    return NextResponse.json({
-      embedding: embedding.data[0].embedding,
-      metadata: storedEmbedding.metadata
-    });
-
+    // Continue with the rest of your code...
   } catch (error) {
-    console.error('Understanding generation error:', error);
     return NextResponse.json(
       { error: 'Failed to generate understanding' },
       { status: 500 }

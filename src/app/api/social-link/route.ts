@@ -1,7 +1,7 @@
 // src/app/api/social-link/route.ts
 import { NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
@@ -9,7 +9,18 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: Request) {
   try {
     const { userId, platform, profileUrl } = await request.json();
-    const supabase = createRouteHandlerClient({ cookies });
+    
+    const supabase = createRouteHandlerClient({ 
+      cookies,
+      options: {
+        auth: {
+          flowType: 'pkce',
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          persistSession: true
+        }
+      }
+    });
 
     const { error } = await supabase
       .from('social_profiles')

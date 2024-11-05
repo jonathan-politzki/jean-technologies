@@ -1,13 +1,13 @@
 // src/hooks/useSocialConnect.ts
 import { useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getClientSupabase } from '@/lib/supabase';
 import { Platform, SocialProfile } from '@/lib/types';
 import { handleError } from '@/utils/errors';
 
 export function useSocialConnect() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
-    const supabase = createClientComponentClient();
+    const supabase = getClientSupabase();
 
     const getConnectedPlatforms = async (): Promise<SocialProfile[]> => {
         const timestamp = new Date().toISOString();
@@ -16,7 +16,6 @@ export function useSocialConnect() {
             setLoading(true);
             setError(null);
 
-            // Get current user
             const { data: { user }, error: userError } = await supabase.auth.getUser();
             console.log(`[${timestamp}] User check:`, { 
                 hasUser: !!user, 
@@ -29,15 +28,19 @@ export function useSocialConnect() {
                 return [];
             }
 
-            // Query social profiles
             console.log(`[${timestamp}] Querying social profiles for user:`, user.id);
             const { data, error: fetchError } = await supabase
                 .from('social_profiles')
                 .select('*')
-                .eq('user_id', user.id);
+                .eq('user_id', user.id)
+                .throwOnError();
 
             if (fetchError) {
-                console.error(`[${timestamp}] Social profiles fetch error:`, fetchError);
+                console.error(`[${timestamp}] Social profiles fetch error:`, {
+                    message: fetchError.message,
+                    code: fetchError.code,
+                    details: fetchError.details
+                });
                 throw fetchError;
             }
 
@@ -78,7 +81,13 @@ export function useSocialConnect() {
 
             const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
                 provider: platform === 'linkedin_oidc' ? 'linkedin_oidc' : platform,
-                options
+                options: {
+                    ...options,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent'
+                    }
+                }
             });
 
             if (oauthError) {
@@ -125,7 +134,8 @@ export function useSocialConnect() {
                 .from('social_profiles')
                 .delete()
                 .eq('platform', platform)
-                .eq('user_id', user.id);
+                .eq('user_id', user.id)
+                .throwOnError();
 
             if (disconnectError) {
                 console.error(`[${timestamp}] Disconnect error:`, disconnectError);

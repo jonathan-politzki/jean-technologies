@@ -7,7 +7,6 @@ import { handleError } from '@/utils/errors';
 export function useSocialConnect() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
-    // Create client without headers in options
     const supabase = createClientComponentClient();
 
     const getConnectedPlatforms = async (): Promise<SocialProfile[]> => {
@@ -16,36 +15,16 @@ export function useSocialConnect() {
             setLoading(true);
             setError(null);
 
-            // First get the current user
-            const { data: { user }, error: userError } = await supabase.auth.getUser();
-            
-            if (userError) {
-                console.error('User fetch error:', userError);
-                throw userError;
-            }
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return [];
 
-            if (!user) {
-                console.error('No user found');
-                return [];
-            }
-
-            console.log('Fetching profiles for user:', user.id);
-            
-            // Set headers in the query itself
             const { data, error: fetchError } = await supabase
                 .from('social_profiles')
                 .select('*')
-                .eq('user_id', user.id)
-                .throwOnError();
+                .eq('user_id', user.id);
 
-            if (fetchError) {
-                console.error('Profile fetch error:', fetchError);
-                throw fetchError;
-            }
-
-            console.log('Fetched profiles:', data);
+            if (fetchError) throw fetchError;
             return data || [];
-            
         } catch (err) {
             console.error('Get platforms error:', err);
             setError(handleError(err));
@@ -57,8 +36,6 @@ export function useSocialConnect() {
 
     const connectPlatform = async (platform: Platform): Promise<void> => {
         try {
-            const timestamp = new Date().toISOString();
-            console.log(`[${timestamp}] Starting ${platform} connection`);
             setLoading(true);
             setError(null);
 
@@ -69,26 +46,12 @@ export function useSocialConnect() {
                     : 'profile email',
             };
 
-            console.log(`[${timestamp}] Initiating OAuth with:`, {
-                provider: platform,
-                redirectTo: options.redirectTo,
-                scopes: options.scopes
-            });
-
-            const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
-                provider: 'linkedin_oidc', // Always use linkedin_oidc
+            const { error: oauthError } = await supabase.auth.signInWithOAuth({
+                provider: 'linkedin_oidc',
                 options
             });
 
-            if (oauthError) {
-                console.error(`[${timestamp}] OAuth error:`, oauthError);
-                throw oauthError;
-            }
-
-            console.log(`[${timestamp}] OAuth success:`, {
-                hasData: !!data,
-                url: data?.url
-            });
+            if (oauthError) throw oauthError;
 
         } catch (err) {
             console.error('Connection error:', err);
@@ -98,9 +61,34 @@ export function useSocialConnect() {
         }
     };
 
+    const disconnectPlatform = async (platform: Platform): Promise<void> => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('No authenticated user');
+
+            const { error: disconnectError } = await supabase
+                .from('social_profiles')
+                .delete()
+                .eq('platform', platform)
+                .eq('user_id', user.id);
+
+            if (disconnectError) throw disconnectError;
+
+        } catch (err) {
+            console.error('Disconnect error:', err);
+            setError(handleError(err));
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return {
         connectPlatform,
         getConnectedPlatforms,
+        disconnectPlatform,  // Added this back
         loading,
         error
     };

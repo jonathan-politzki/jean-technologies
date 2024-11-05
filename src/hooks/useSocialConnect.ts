@@ -70,47 +70,55 @@ export function useSocialConnect() {
             console.log(`[${timestamp}] Starting ${platform} connection`);
             setLoading(true);
             setError(null);
-
-            const options = {
+    
+            // Define base options
+            const baseOptions = {
                 redirectTo: `${window.location.origin}/auth/callback`,
                 scopes: platform === 'linkedin_oidc' 
                     ? 'openid profile email' // Simplified LinkedIn scopes
                     : 'profile email',
-                queryParams: {
-                    access_type: 'offline',
-                    prompt: 'consent',
-                }
             };
-
-            if (platform === 'linkedin_oidc') {
-                options.queryParams = {
-                    ...options.queryParams,
-                    response_type: 'code',
+    
+            // Define platform-specific options
+            const options = platform === 'linkedin_oidc' 
+                ? {
+                    ...baseOptions,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
+                        // Add any LinkedIn-specific parameters here
+                    }
+                }
+                : {
+                    ...baseOptions,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent'
+                    }
                 };
-            }
-
+    
             console.log(`[${timestamp}] Initiating OAuth with options:`, {
                 platform,
                 redirectTo: options.redirectTo,
                 scopes: options.scopes,
                 queryParams: options.queryParams
             });
-
+    
             const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
                 provider: platform,
                 options
             });
-
+    
             if (oauthError) {
                 console.error(`[${timestamp}] OAuth error:`, oauthError);
                 throw oauthError;
             }
-
+    
             console.log(`[${timestamp}] OAuth initiated successfully:`, {
                 hasUrl: !!data?.url,
                 url: data?.url
             });
-
+    
         } catch (err) {
             console.error(`[${timestamp}] Connection error:`, err);
             setError(handleError(err));

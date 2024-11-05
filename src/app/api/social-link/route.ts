@@ -1,5 +1,6 @@
+// src/app/api/social-link/route.ts
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';  // Using the server-side client
 
 export async function POST(request: Request) {
   try {

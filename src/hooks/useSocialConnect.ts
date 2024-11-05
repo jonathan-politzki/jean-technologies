@@ -1,13 +1,13 @@
 // src/hooks/useSocialConnect.ts
 import { useState } from 'react';
-import { getClientSupabase } from '@/lib/supabase';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Platform, SocialProfile } from '@/lib/types';
 import { handleError } from '@/utils/errors';
 
 export function useSocialConnect() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
-    const supabase = getClientSupabase();
+    const supabase = createClientComponentClient();
 
     const getConnectedPlatforms = async (): Promise<SocialProfile[]> => {
         const timestamp = new Date().toISOString();
@@ -32,15 +32,10 @@ export function useSocialConnect() {
             const { data, error: fetchError } = await supabase
                 .from('social_profiles')
                 .select('*')
-                .eq('user_id', user.id)
-                .throwOnError();
+                .eq('user_id', user.id) as { data: SocialProfile[] | null; error: any };
 
             if (fetchError) {
-                console.error(`[${timestamp}] Social profiles fetch error:`, {
-                    message: fetchError.message,
-                    code: fetchError.code,
-                    details: fetchError.details
-                });
+                console.error(`[${timestamp}] Social profiles fetch error:`, fetchError);
                 throw fetchError;
             }
 
@@ -81,13 +76,7 @@ export function useSocialConnect() {
 
             const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
                 provider: platform === 'linkedin_oidc' ? 'linkedin_oidc' : platform,
-                options: {
-                    ...options,
-                    queryParams: {
-                        access_type: 'offline',
-                        prompt: 'consent'
-                    }
-                }
+                options
             });
 
             if (oauthError) {
@@ -134,8 +123,7 @@ export function useSocialConnect() {
                 .from('social_profiles')
                 .delete()
                 .eq('platform', platform)
-                .eq('user_id', user.id)
-                .throwOnError();
+                .eq('user_id', user.id);
 
             if (disconnectError) {
                 console.error(`[${timestamp}] Disconnect error:`, disconnectError);

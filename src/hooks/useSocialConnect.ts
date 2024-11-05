@@ -1,13 +1,13 @@
 // src/hooks/useSocialConnect.ts
 import { useState } from 'react';
-import { getSupabase } from '@/lib/supabase';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Platform, SocialProfile } from '@/lib/types';
 import { handleError } from '@/utils/errors';
 
 export function useSocialConnect() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
-    const supabase = getSupabase();
+    const supabase = createClientComponentClient();
 
     const getConnectedPlatforms = async (): Promise<SocialProfile[]> => {
         const timestamp = new Date().toISOString();
@@ -28,24 +28,24 @@ export function useSocialConnect() {
                 return [];
             }
 
+            // Query social profiles
             console.log(`[${timestamp}] Querying social profiles for user:`, user.id);
             const { data, error: fetchError } = await supabase
                 .from('social_profiles')
-                .select();
+                .select('*')
+                .eq('user_id', user.id);
 
             if (fetchError) {
                 console.error(`[${timestamp}] Social profiles fetch error:`, fetchError);
                 throw fetchError;
             }
 
-            const typedData = (data || []) as SocialProfile[];
-            
             console.log(`[${timestamp}] Successfully fetched profiles:`, {
-                count: typedData.length || 0,
-                profiles: typedData
+                count: data?.length || 0,
+                profiles: data
             });
             
-            return typedData;
+            return data as SocialProfile[] || [];
         } catch (err) {
             console.error(`[${timestamp}] Get platforms error:`, err);
             setError(handleError(err));

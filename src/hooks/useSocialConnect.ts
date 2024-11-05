@@ -29,11 +29,21 @@ export function useSocialConnect() {
                 return [];
             }
 
-            // Query social profiles
+            // Query social profiles with explicit column selection
             console.log(`[${timestamp}] Querying social profiles for user:`, user.id);
             const { data: profiles, error: profileError } = await supabase
                 .from('social_profiles')
-                .select('*')
+                .select(`
+                    id,
+                    user_id,
+                    platform,
+                    platform_user_id,
+                    access_token,
+                    refresh_token,
+                    profile_data,
+                    created_at,
+                    updated_at
+                `)
                 .eq('user_id', user.id)
                 .order('created_at', { ascending: false });
 
@@ -64,25 +74,31 @@ export function useSocialConnect() {
             const options = {
                 redirectTo: `${window.location.origin}/auth/callback`,
                 scopes: platform === 'linkedin_oidc' 
-                    ? 'openid profile w_member_social email'
+                    ? 'openid profile email' // Simplified LinkedIn scopes
                     : 'profile email',
+                queryParams: {
+                    access_type: 'offline',
+                    prompt: 'consent',
+                }
             };
+
+            if (platform === 'linkedin_oidc') {
+                options.queryParams = {
+                    ...options.queryParams,
+                    response_type: 'code',
+                };
+            }
 
             console.log(`[${timestamp}] Initiating OAuth with options:`, {
                 platform,
                 redirectTo: options.redirectTo,
-                scopes: options.scopes
+                scopes: options.scopes,
+                queryParams: options.queryParams
             });
 
             const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
-                provider: platform === 'linkedin_oidc' ? 'linkedin_oidc' : platform,
-                options: {
-                    ...options,
-                    queryParams: {
-                        access_type: 'offline',
-                        prompt: 'consent',
-                    }
-                }
+                provider: platform,
+                options
             });
 
             if (oauthError) {
@@ -91,7 +107,8 @@ export function useSocialConnect() {
             }
 
             console.log(`[${timestamp}] OAuth initiated successfully:`, {
-                hasUrl: !!data?.url
+                hasUrl: !!data?.url,
+                url: data?.url
             });
 
         } catch (err) {
@@ -120,35 +137,14 @@ export function useSocialConnect() {
                 throw new Error('No authenticated user');
             }
 
-            console.log(`[${timestamp}] Deleting social profile:`, {
-                userId: user.id,
-                platform
-            });
-
-            // First, find the specific profile to delete
-            const { data: profiles, error: findError } = await supabase
-                .from('social_profiles')
-                .select('id')
-                .match({ 
-                    user_id: user.id,
-                    platform: platform 
-                });
-
-            if (findError) {
-                console.error(`[${timestamp}] Find profile error:`, findError);
-                throw findError;
-            }
-
-            if (!profiles?.length) {
-                console.log(`[${timestamp}] No profile found to disconnect`);
-                return;
-            }
-
-            // Delete the profile
+            // Delete the profile with a single query
             const { error: disconnectError } = await supabase
                 .from('social_profiles')
                 .delete()
-                .eq('id', profiles[0].id);
+                .match({ 
+                    user_id: user.id,
+                    platform 
+                });
 
             if (disconnectError) {
                 console.error(`[${timestamp}] Disconnect error:`, disconnectError);
@@ -156,6 +152,15 @@ export function useSocialConnect() {
             }
 
             console.log(`[${timestamp}] Successfully disconnected ${platform}`);
+
+            // Optionally revoke OAuth access
+            if (platform === 'linkedin_oidc') {
+                try {
+                    await supabase.auth.signOut({ scope: 'linkedin_oidc' });
+                } catch (signOutError) {
+                    console.error(`[${timestamp}] OAuth revoke warning:`, signOutError);
+                }
+            }
 
         } catch (err) {
             console.error(`[${timestamp}] Disconnect error:`, err);

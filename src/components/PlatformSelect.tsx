@@ -25,7 +25,7 @@ const PLATFORMS: {
     description: 'Connect your GitHub profile'
   },
   { 
-    id: 'linkedin', 
+    id: 'linkedin_oidc', 
     name: 'LinkedIn', 
     icon: '🔗',
     description: 'Connect your professional profile'

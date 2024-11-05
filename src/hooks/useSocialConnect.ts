@@ -19,7 +19,9 @@ export function useSocialConnect() {
             if (userError) throw userError;
             if (!user) return [];
     
-            // Remove headers() call and simplify the query
+            console.log(`[${timestamp}] Querying profiles for user:`, user.id);
+    
+            // First check if the table exists and has the correct structure
             const { data: profiles, error: profileError } = await supabase
                 .from('social_profiles')
                 .select(`
@@ -33,11 +35,14 @@ export function useSocialConnect() {
                     created_at,
                     updated_at
                 `)
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false });
+                .eq('user_id', user.id);
     
-            if (profileError) throw profileError;
+            if (profileError) {
+                console.error(`[${timestamp}] Profile query error:`, profileError);
+                throw profileError;
+            }
     
+            console.log(`[${timestamp}] Found profiles:`, profiles?.length || 0);
             return profiles || [];
     
         } catch (err) {

@@ -1,23 +1,26 @@
-// src/app/providers.tsx
 'use client'
 
-import { createContext, useContext, useMemo } from 'react'
+import { createContext, useContext } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import type { Database } from '../lib/database.types'
 
-// Create a singleton instance
-const supabaseClient = createClientComponentClient<Database>()
+// Create a singleton instance outside of any component
+const supabase = createClientComponentClient<Database>()
 
-const SupabaseContext = createContext(supabaseClient)
+const SupabaseContext = createContext<typeof supabase | undefined>(undefined)
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <SupabaseContext.Provider value={supabaseClient}>
+    <SupabaseContext.Provider value={supabase}>
       {children}
     </SupabaseContext.Provider>
   )
 }
 
 export function useSupabase() {
-  return useContext(SupabaseContext)
+  const context = useContext(SupabaseContext)
+  if (context === undefined) {
+    throw new Error('useSupabase must be used within a SupabaseProvider')
+  }
+  return context
 }

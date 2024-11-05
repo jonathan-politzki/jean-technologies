@@ -1,10 +1,5 @@
 import '@/styles/globals.css'
-import { Providers } from './providers'
-
-export const metadata = {
-  title: 'Jean Technologies',
-  description: 'Understanding users through social data',
-}
+import { SupabaseProvider } from '../context/supabase'
 
 export default function RootLayout({
   children,
@@ -14,8 +9,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Providers>{children}</Providers>
+        <SupabaseProvider>{children}</SupabaseProvider>
       </body>
     </html>
   )
-} 
+}

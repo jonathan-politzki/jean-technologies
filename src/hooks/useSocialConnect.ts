@@ -12,25 +12,14 @@ export function useSocialConnect() {
     const getConnectedPlatforms = useCallback(async (): Promise<SocialProfile[]> => {
         const timestamp = new Date().toISOString();
         try {
-            console.log(`[${timestamp}] Starting getConnectedPlatforms`);
             setLoading(true);
             setError(null);
 
             const { data: { user }, error: userError } = await supabase.auth.getUser();
-            console.log(`[${timestamp}] User check:`, { 
-                hasUser: !!user, 
-                userId: user?.id,
-                error: userError ? userError.message : null 
-            });
-
             if (userError) throw userError;
-            if (!user) {
-                console.log(`[${timestamp}] No authenticated user found`);
-                return [];
-            }
+            if (!user) return [];
 
-            // Query social profiles with explicit column selection
-            console.log(`[${timestamp}] Querying social profiles for user:`, user.id);
+            // Modified query with explicit headers and return type
             const { data: profiles, error: profileError } = await supabase
                 .from('social_profiles')
                 .select(`
@@ -45,18 +34,19 @@ export function useSocialConnect() {
                     updated_at
                 `)
                 .eq('user_id', user.id)
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false })
+                .headers({
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                })
+                .returns<SocialProfile[]>();
 
-            if (profileError) {
-                console.error(`[${timestamp}] Profile fetch error:`, profileError);
-                throw profileError;
-            }
+            if (profileError) throw profileError;
 
-            console.log(`[${timestamp}] Found ${profiles?.length || 0} profiles`);
-            return profiles as SocialProfile[] || [];
+            return profiles || [];
 
         } catch (err) {
-            console.error(`[${timestamp}] Get platforms error:`, err);
+            console.error(`[${timestamp}] Error:`, err);
             setError(handleError(err));
             return [];
         } finally {

@@ -29,33 +29,41 @@ export function useSocialConnect() {
             setLoading(false);
         }
     };
-    
-    
 
     const connectPlatform = async (platform: Platform): Promise<void> => {
         try {
-            console.log(`Starting ${platform} connection`);
+            const timestamp = new Date().toISOString();
+            console.log(`[${timestamp}] Starting ${platform} connection`);
             setLoading(true);
             setError(null);
     
             const options = {
                 redirectTo: `${window.location.origin}/auth/callback`,
-                scopes: platform === 'linkedin' 
-                    ? 'openid profile w_member_social email'  // Match LinkedIn exactly
+                scopes: platform === 'linkedin_oidc' 
+                    ? 'openid profile w_member_social email'
                     : 'profile email',
             };
     
-            const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+            console.log(`[${timestamp}] Initiating OAuth with:`, {
                 provider: platform,
+                redirectTo: options.redirectTo,
+                scopes: options.scopes
+            });
+    
+            const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+                provider: platform === 'linkedin_oidc' ? 'linkedin_oidc' : platform,
                 options
             });
     
             if (oauthError) {
-                console.error('OAuth error:', oauthError);
+                console.error(`[${timestamp}] OAuth error:`, oauthError);
                 throw oauthError;
             }
     
-            console.log('OAuth success:', data);
+            console.log(`[${timestamp}] OAuth success:`, {
+                hasData: !!data,
+                url: data?.url
+            });
     
         } catch (err) {
             console.error('Connection error:', err);
@@ -67,15 +75,21 @@ export function useSocialConnect() {
 
     const disconnectPlatform = async (platform: Platform): Promise<void> => {
         try {
+            console.log(`Starting disconnection of ${platform}`);
             setLoading(true);
             setError(null);
 
             const { error: disconnectError } = await supabase
                 .from('social_profiles')
                 .delete()
-                .eq('platform', platform);
+                .eq('platform', platform === 'linkedin_oidc' ? 'linkedin_oidc' : platform);
 
-            if (disconnectError) throw disconnectError;
+            if (disconnectError) {
+                console.error('Disconnect error:', disconnectError);
+                throw disconnectError;
+            }
+
+            console.log(`Successfully disconnected ${platform}`);
 
         } catch (err) {
             console.error('Disconnect error:', err);

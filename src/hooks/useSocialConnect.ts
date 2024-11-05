@@ -37,25 +37,26 @@ export function useSocialConnect() {
             console.log(`Starting ${platform} connection`);
             setLoading(true);
             setError(null);
-
-            // Modified LinkedIn specific configuration
+    
             const options = {
                 redirectTo: `${window.location.origin}/auth/callback`,
-                scopes: platform === 'linkedin' ? 'r_liteprofile r_emailaddress' : 'profile email',
+                scopes: platform === 'linkedin' 
+                    ? 'openid profile w_member_social email'  // Match LinkedIn exactly
+                    : 'profile email',
             };
-
+    
             const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
                 provider: platform,
                 options
             });
-
+    
             if (oauthError) {
                 console.error('OAuth error:', oauthError);
                 throw oauthError;
             }
-
+    
             console.log('OAuth success:', data);
-
+    
         } catch (err) {
             console.error('Connection error:', err);
             setError(handleError(err));

@@ -6,21 +6,49 @@ import { handleError } from '@/utils/errors';
 export function useSocialConnect() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
-    const supabase = createClientComponentClient();
+    const supabase = createClientComponentClient({
+        options: {
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        }
+    });
 
     const getConnectedPlatforms = async (): Promise<SocialProfile[]> => {
         try {
             console.log('Fetching connected platforms');
             setLoading(true);
             setError(null);
-    
+
+            // First get the current user
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            
+            if (userError) {
+                console.error('User fetch error:', userError);
+                throw userError;
+            }
+
+            if (!user) {
+                console.error('No user found');
+                return [];
+            }
+
+            console.log('Fetching profiles for user:', user.id);
+            
             const { data, error: fetchError } = await supabase
                 .from('social_profiles')
-                .select('*');
-    
-            if (fetchError) throw fetchError;
-    
+                .select('*')
+                .eq('user_id', user.id);
+
+            if (fetchError) {
+                console.error('Profile fetch error:', fetchError);
+                throw fetchError;
+            }
+
+            console.log('Fetched profiles:', data);
             return data || [];
+            
         } catch (err) {
             console.error('Get platforms error:', err);
             setError(handleError(err));
@@ -36,35 +64,35 @@ export function useSocialConnect() {
             console.log(`[${timestamp}] Starting ${platform} connection`);
             setLoading(true);
             setError(null);
-    
+
             const options = {
                 redirectTo: `${window.location.origin}/auth/callback`,
                 scopes: platform === 'linkedin_oidc' 
                     ? 'openid profile w_member_social email'
                     : 'profile email',
             };
-    
+
             console.log(`[${timestamp}] Initiating OAuth with:`, {
                 provider: platform,
                 redirectTo: options.redirectTo,
                 scopes: options.scopes
             });
-    
+
             const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
-                provider: platform === 'linkedin_oidc' ? 'linkedin_oidc' : platform,
+                provider: platform,
                 options
             });
-    
+
             if (oauthError) {
                 console.error(`[${timestamp}] OAuth error:`, oauthError);
                 throw oauthError;
             }
-    
+
             console.log(`[${timestamp}] OAuth success:`, {
                 hasData: !!data,
                 url: data?.url
             });
-    
+
         } catch (err) {
             console.error('Connection error:', err);
             setError(handleError(err));
@@ -82,7 +110,7 @@ export function useSocialConnect() {
             const { error: disconnectError } = await supabase
                 .from('social_profiles')
                 .delete()
-                .eq('platform', platform === 'linkedin_oidc' ? 'linkedin_oidc' : platform);
+                .eq('platform', platform);
 
             if (disconnectError) {
                 console.error('Disconnect error:', disconnectError);

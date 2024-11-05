@@ -34,17 +34,15 @@ export interface LinkedInProfile {
 }
 
 export interface SocialProfile {
-  id: string;
-  user_id: string;
-  platform: Platform;
-  platform_user_id: string;
-  access_token?: string;
-  refresh_token?: string;
-  profile_url?: string;
-  profile_data: Record<string, any>;
-  linkedinData?: LinkedInProfile;
-  created_at: Date;
-  updated_at: Date;
+    id: string;
+    user_id: string;
+    platform: Platform;
+    platform_user_id: string;
+    access_token?: string;
+    refresh_token?: string;
+    profile_data?: Record<string, any>;
+    created_at?: Date;
+    updated_at?: Date;
 }
 
 // AI/ML Types

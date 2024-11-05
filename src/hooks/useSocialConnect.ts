@@ -1,3 +1,4 @@
+// src/hooks/useSocialConnect.ts
 import { useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Platform, SocialProfile } from '@/lib/types';
@@ -6,14 +7,8 @@ import { handleError } from '@/utils/errors';
 export function useSocialConnect() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
-    const supabase = createClientComponentClient({
-        options: {
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        }
-    });
+    // Create client without headers in options
+    const supabase = createClientComponentClient();
 
     const getConnectedPlatforms = async (): Promise<SocialProfile[]> => {
         try {
@@ -36,10 +31,12 @@ export function useSocialConnect() {
 
             console.log('Fetching profiles for user:', user.id);
             
+            // Set headers in the query itself
             const { data, error: fetchError } = await supabase
                 .from('social_profiles')
                 .select('*')
-                .eq('user_id', user.id);
+                .eq('user_id', user.id)
+                .throwOnError();
 
             if (fetchError) {
                 console.error('Profile fetch error:', fetchError);
@@ -79,7 +76,7 @@ export function useSocialConnect() {
             });
 
             const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
-                provider: platform,
+                provider: 'linkedin_oidc', // Always use linkedin_oidc
                 options
             });
 
@@ -101,36 +98,9 @@ export function useSocialConnect() {
         }
     };
 
-    const disconnectPlatform = async (platform: Platform): Promise<void> => {
-        try {
-            console.log(`Starting disconnection of ${platform}`);
-            setLoading(true);
-            setError(null);
-
-            const { error: disconnectError } = await supabase
-                .from('social_profiles')
-                .delete()
-                .eq('platform', platform);
-
-            if (disconnectError) {
-                console.error('Disconnect error:', disconnectError);
-                throw disconnectError;
-            }
-
-            console.log(`Successfully disconnected ${platform}`);
-
-        } catch (err) {
-            console.error('Disconnect error:', err);
-            setError(handleError(err));
-        } finally {
-            setLoading(false);
-        }
-    };
-
     return {
         connectPlatform,
         getConnectedPlatforms,
-        disconnectPlatform,
         loading,
         error
     };

@@ -54,7 +54,7 @@ serve(async (req) => {
     const context = await Promise.all(profiles.map(async p => {
       const data = p.profile_data;
       switch (p.platform) {
-        case 'linkedin':
+        case 'linkedin_oidc':
           return processLinkedInContext(data);
         default:
           return JSON.stringify(data);

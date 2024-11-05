@@ -11,7 +11,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from('auth.providers')
       .select('*')
-      .filter('provider', 'eq', 'linkedin')
+      .filter('provider', 'eq', 'linkedin_oidc')
       .single();
 
     // Current deployment info
@@ -29,7 +29,8 @@ export async function GET() {
         },
         linkedin: {
           hasClientId: !!process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID,
-          hasClientSecret: !!process.env.LINKEDIN_CLIENT_SECRET
+          hasClientSecret: !!process.env.LINKEDIN_CLIENT_SECRET,
+          provider: 'linkedin_oidc'
         },
         deployment: {
           url: deploymentUrl,

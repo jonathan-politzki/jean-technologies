@@ -9,7 +9,7 @@ export const userSchema = z.object({
 });
 
 export const socialProfileSchema = z.object({
-  platform: z.enum(['linkedin', 'github', 'google'] as const),
+  platform: z.enum(['linkedin_oidc', 'github', 'google'] as const),
   access_token: z.string(),
   refresh_token: z.string().optional(),
 });
@@ -38,3 +38,4 @@ export function validateUnderstandingParams(params: unknown) {
 export function validateSocialProfile(params: unknown) {
   return socialProfileSchema.parse(params);
 }
+

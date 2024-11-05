@@ -58,7 +58,7 @@ export async function GET(request: Request) {
         if (session?.provider_token) {
             try {
                 console.log(`[${timestamp}] Attempting to fetch provider profile`);
-                if (provider === 'linkedin') {
+                if (provider === 'linkedin_oidc') {
                     const linkedinClient = new LinkedInClient(session.provider_token);
                     const profile = await linkedinClient.getProfile();
                     console.log(`[${timestamp}] LinkedIn Profile:`, {

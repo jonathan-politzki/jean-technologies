@@ -10,7 +10,7 @@ function TestComponent() {
   return (
     <div>
       <button 
-        onClick={() => connectPlatform('linkedin')}
+        onClick={() => connectPlatform('linkedin_oidc')}
         data-testid="linkedin-connect"
       >
         Connect LinkedIn

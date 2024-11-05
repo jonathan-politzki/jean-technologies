@@ -70,55 +70,38 @@ export function useSocialConnect() {
             console.log(`[${timestamp}] Starting ${platform} connection`);
             setLoading(true);
             setError(null);
-    
-            // Define base options
+
             const baseOptions = {
                 redirectTo: `${window.location.origin}/auth/callback`,
                 scopes: platform === 'linkedin_oidc' 
-                    ? 'openid profile email' // Simplified LinkedIn scopes
+                    ? 'openid profile email' 
                     : 'profile email',
-            };
-    
-            // Define platform-specific options
-            const options = platform === 'linkedin_oidc' 
-                ? {
-                    ...baseOptions,
-                    queryParams: {
-                        access_type: 'offline',
-                        prompt: 'consent',
-                        // Add any LinkedIn-specific parameters here
-                    }
+                queryParams: {
+                    access_type: 'offline',
+                    prompt: 'consent'
                 }
-                : {
-                    ...baseOptions,
-                    queryParams: {
-                        access_type: 'offline',
-                        prompt: 'consent'
-                    }
-                };
-    
+            };
+
             console.log(`[${timestamp}] Initiating OAuth with options:`, {
                 platform,
-                redirectTo: options.redirectTo,
-                scopes: options.scopes,
-                queryParams: options.queryParams
+                ...baseOptions
             });
-    
+
             const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
                 provider: platform,
-                options
+                options: baseOptions
             });
-    
+
             if (oauthError) {
                 console.error(`[${timestamp}] OAuth error:`, oauthError);
                 throw oauthError;
             }
-    
+
             console.log(`[${timestamp}] OAuth initiated successfully:`, {
                 hasUrl: !!data?.url,
                 url: data?.url
             });
-    
+
         } catch (err) {
             console.error(`[${timestamp}] Connection error:`, err);
             setError(handleError(err));
@@ -161,13 +144,12 @@ export function useSocialConnect() {
 
             console.log(`[${timestamp}] Successfully disconnected ${platform}`);
 
-            // Optionally revoke OAuth access
-            if (platform === 'linkedin_oidc') {
-                try {
-                    await supabase.auth.signOut({ scope: 'linkedin_oidc' });
-                } catch (signOutError) {
-                    console.error(`[${timestamp}] OAuth revoke warning:`, signOutError);
-                }
+            // Sign out of the current session if it's the platform being disconnected
+            try {
+                await supabase.auth.signOut();
+                console.log(`[${timestamp}] Signed out of current session`);
+            } catch (signOutError) {
+                console.error(`[${timestamp}] Sign out warning:`, signOutError);
             }
 
         } catch (err) {

@@ -13,18 +13,13 @@ export function useSocialConnect() {
             console.log('Fetching connected platforms');
             setLoading(true);
             setError(null);
-
-            // Changed the query to be simpler
+    
             const { data, error: fetchError } = await supabase
                 .from('social_profiles')
-                .select('id, platform, platform_user_id, created_at')
-                .order('created_at', { ascending: false });
-
-            if (fetchError) {
-                console.error('Fetch error:', fetchError);
-                throw fetchError;
-            }
-
+                .select('*');
+    
+            if (fetchError) throw fetchError;
+    
             return data || [];
         } catch (err) {
             console.error('Get platforms error:', err);
@@ -34,6 +29,8 @@ export function useSocialConnect() {
             setLoading(false);
         }
     };
+    
+    
 
     const connectPlatform = async (platform: Platform): Promise<void> => {
         try {

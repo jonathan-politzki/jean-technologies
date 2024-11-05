@@ -14,12 +14,12 @@ export function useSocialConnect() {
         try {
             setLoading(true);
             setError(null);
-
+    
             const { data: { user }, error: userError } = await supabase.auth.getUser();
             if (userError) throw userError;
             if (!user) return [];
-
-            // Modified query with explicit headers and return type
+    
+            // Remove headers() call and simplify the query
             const { data: profiles, error: profileError } = await supabase
                 .from('social_profiles')
                 .select(`
@@ -34,17 +34,12 @@ export function useSocialConnect() {
                     updated_at
                 `)
                 .eq('user_id', user.id)
-                .order('created_at', { ascending: false })
-                .headers({
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                })
-                .returns<SocialProfile[]>();
-
+                .order('created_at', { ascending: false });
+    
             if (profileError) throw profileError;
-
+    
             return profiles || [];
-
+    
         } catch (err) {
             console.error(`[${timestamp}] Error:`, err);
             setError(handleError(err));

@@ -28,5 +28,31 @@ export class LinkedInClient {
         profilePicture: ''  // Not available with current scopes
       };
     }
+  
+    async getPositions() {
+      const response = await fetch(
+        `${this.baseUrl}/me/positions?projection=(*)`,
+        {
+          headers: {
+            'Authorization': `Bearer ${this.accessToken}`,
+            'X-Restli-Protocol-Version': '2.0.0'
+          }
+        }
+      );
+      return response.json();
+    }
+  
+    async getSkills() {
+      const response = await fetch(
+        `${this.baseUrl}/me/skills`,
+        {
+          headers: {
+            'Authorization': `Bearer ${this.accessToken}`,
+            'X-Restli-Protocol-Version': '2.0.0'
+          }
+        }
+      );
+      return response.json();
+    }
   }
   

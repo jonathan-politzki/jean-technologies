@@ -22,7 +22,7 @@ export async function POST(request: Request) {
             .from('social_profiles')
             .upsert({
                 user_id: user.id,
-                platform: 'linkedin',
+                platform: 'linkedin_oidc',
                 platform_user_id: profile.id,
                 access_token: accessToken,
                 profile_data: {

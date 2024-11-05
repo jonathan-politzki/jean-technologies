@@ -1,13 +1,13 @@
 // src/hooks/useSocialConnect.ts
 import { useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabaseClient } from '@/lib/supabase';
 import { Platform, SocialProfile } from '@/lib/types';
 import { handleError } from '@/utils/errors';
 
 export function useSocialConnect() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
-    const supabase = createClientComponentClient();
+    const supabase = getSupabaseClient();
 
     const getConnectedPlatforms = async (): Promise<SocialProfile[]> => {
         const timestamp = new Date().toISOString();
@@ -30,22 +30,23 @@ export function useSocialConnect() {
 
             // Query social profiles
             console.log(`[${timestamp}] Querying social profiles for user:`, user.id);
-            const { data, error: fetchError } = await supabase
+            const { data: existingProfile } = await supabase
                 .from('social_profiles')
                 .select('*')
-                .eq('user_id', user.id);
+                .eq('user_id', user.id)
+                .single()
+                .headers({
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                });
 
-            if (fetchError) {
-                console.error(`[${timestamp}] Social profiles fetch error:`, fetchError);
-                throw fetchError;
+            if (existingProfile) {
+                console.log(`[${timestamp}] Existing social profile found:`, existingProfile);
+                return existingProfile as SocialProfile[] || [];
             }
 
-            console.log(`[${timestamp}] Successfully fetched profiles:`, {
-                count: data?.length || 0,
-                profiles: data
-            });
-            
-            return data as SocialProfile[] || [];
+            console.log(`[${timestamp}] No existing social profile found`);
+            return [];
         } catch (err) {
             console.error(`[${timestamp}] Get platforms error:`, err);
             setError(handleError(err));

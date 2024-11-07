@@ -1,8 +1,8 @@
-# Jean v2 Project Context
+# Jean Connect
 Official repository of Jean Technologies and our flagship product, Jean Connect.
 
 ## Core Vision
-Jean v2 is a "Plaid for user understanding" that solves the cold-start problem through:
+Jean is the "FICO for user understanding" that solves the cold-start problem through:
 1. Zero-shot user understanding from social data
 2. Universal embedding translation layer
 3. Shared semantic label space for cross-domain understanding

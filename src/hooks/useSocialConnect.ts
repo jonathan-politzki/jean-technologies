@@ -10,7 +10,6 @@ export function useSocialConnect() {
     const supabase = useSupabase();
 
     const getConnectedPlatforms = useCallback(async (): Promise<SocialProfile[]> => {
-        const timestamp = new Date().toISOString();
         try {
             setLoading(true);
             setError(null);
@@ -19,9 +18,7 @@ export function useSocialConnect() {
             if (userError) throw userError;
             if (!user) return [];
     
-            console.log(`[${timestamp}] Querying profiles for user:`, user.id);
-    
-            // First check if the table exists and has the correct structure
+            // Use explicit column selection instead of *
             const { data: profiles, error: profileError } = await supabase
                 .from('social_profiles')
                 .select(`
@@ -37,16 +34,11 @@ export function useSocialConnect() {
                 `)
                 .eq('user_id', user.id);
     
-            if (profileError) {
-                console.error(`[${timestamp}] Profile query error:`, profileError);
-                throw profileError;
-            }
-    
-            console.log(`[${timestamp}] Found profiles:`, profiles?.length || 0);
+            if (profileError) throw profileError;
             return profiles || [];
     
         } catch (err) {
-            console.error(`[${timestamp}] Error:`, err);
+            console.error('Error:', err);
             setError(handleError(err));
             return [];
         } finally {

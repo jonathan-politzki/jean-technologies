@@ -1,6 +1,6 @@
 // src/hooks/useUnderstanding.ts
 import { useState } from 'react';
-import { getSupabase } from '../lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 import { Understanding, UnderstandUserParams } from '../lib/types';
 import { handleError } from '../utils/errors';
 

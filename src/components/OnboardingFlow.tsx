@@ -1,7 +1,7 @@
 // src/components/OnboardingFlow.tsx
 
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 export function OnboardingFlow() {
   const [socialUrl, setSocialUrl] = useState('');

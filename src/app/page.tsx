@@ -28,7 +28,17 @@ export default function Home() {
           
           const { data: profile, error: profileError } = await supabase
             .from('social_profiles')
-            .select('*')
+            .select(`
+                id,
+                user_id,
+                platform,
+                platform_user_id,
+                access_token,
+                refresh_token,
+                profile_data,
+                created_at,
+                updated_at
+            `)
             .eq('user_id', session.user.id)
             .single();
             

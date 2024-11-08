@@ -25,8 +25,23 @@ export async function GET(request: Request) {
 
         if (sessionError) throw sessionError;
 
-        if (session?.provider_token && session.user) {
-            // Store the social profile
+        if (session?.user) {
+            // First ensure user exists
+            const { error: userError } = await supabase
+                .from('users')
+                .upsert({
+                    id: session.user.id,
+                    email: session.user.email,
+                    updated_at: new Date().toISOString()
+                });
+
+            console.log(`[${timestamp}] User creation/update:`, { 
+                success: !userError, 
+                error: userError,
+                userId: session.user.id
+            });
+
+            // Then handle social profile
             const { error: profileError } = await supabase
                 .from('social_profiles')
                 .upsert({
@@ -42,9 +57,12 @@ export async function GET(request: Request) {
                     ignoreDuplicates: false
                 });
 
-            if (profileError) {
-                console.error(`[${timestamp}] Profile storage error:`, profileError);
-            }
+            console.log(`[${timestamp}] Profile creation/update:`, {
+                success: !profileError,
+                error: profileError,
+                userId: session.user.id,
+                platform: session.user.app_metadata.provider
+            });
         }
 
         return NextResponse.redirect(new URL('/', requestUrl.origin));

@@ -1,3 +1,4 @@
+// src/app/page.tsx
 'use client';
 
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -6,80 +7,71 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { SocialProfile } from '@/lib/types';
 import ConnectFlow from '@/components/ConnectFlow';
+import { useSupabaseClient } from '@/lib/supabase';
+
 
 export default function Home() {
-  const [user, setUser] = useState<User | null>(null);
-  const [socialProfile, setSocialProfile] = useState<SocialProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
-  const supabase = createClientComponentClient();
-
-  useEffect(() => {
-    const handleSession = async () => {
-      console.log('Initializing session check...');
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        console.log('Session state:', {
-          hasSession: !!session,
-          hasUser: !!session?.user,
-          userId: session?.user?.id,
-          provider: session?.user?.app_metadata?.provider,
-          error: sessionError
-        });
-        
-        if (sessionError) throw sessionError;
-        
-        if (session?.user) {
-          setUser(session.user);
-          console.log('User authenticated:', session.user.id);
+    const [user, setUser] = useState<User | null>(null);
+    const [socialProfile, setSocialProfile] = useState<SocialProfile | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
+    const supabase = useSupabaseClient();
+  
+    useEffect(() => {
+      const handleSession = async () => {
+        console.log('Initializing session check...');
+        try {
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          if (sessionError) throw sessionError;
           
-          const { data: profile, error: profileError } = await supabase
-            .from('social_profiles')
-            .select()
-            .eq('user_id', session.user.id)
-            .single();
+          if (session?.user) {
+            setUser(session.user);
+            console.log('User authenticated:', session.user.id);
             
-          console.log('Profile fetch:', {
-            hasProfile: !!profile,
-            profileId: profile?.id,
-            platform: profile?.platform,
-            error: profileError,
-            errorCode: profileError?.code
-          });
-          
-          if (profileError && profileError.code !== 'PGRST116') {
-            throw profileError;
+            // Fixed profile query
+            const { data: profile, error: profileError } = await supabase
+              .from('social_profiles')
+              .select(`
+                id,
+                user_id,
+                platform,
+                platform_user_id,
+                access_token,
+                refresh_token,
+                profile_data,
+                created_at,
+                updated_at
+              `)
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+              
+            if (profileError && profileError.code !== 'PGRST116') {
+              throw profileError;
+            }
+            
+            setSocialProfile(profile);
           }
-          
-          setSocialProfile(profile);
-        } else {
-          console.log('No active session found');
+        } catch (e) {
+          console.error('Session error:', e);
+          setError('Failed to get session');
+        } finally {
+          setLoading(false);
         }
-      } catch (e) {
-        console.error('Session error:', e);
-        setError('Failed to get session');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    handleSession();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth state changed:', {
-        event: _event,
-        hasUser: !!session?.user,
-        userId: session?.user?.id
+      };
+  
+      handleSession();
+  
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user || null);
+        router.refresh();
       });
-      setUser(session?.user || null);
-      router.refresh();
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase, router]);
+  
+      return () => subscription.unsubscribe();
+    }, [supabase, router]);
+  
 
   const handleSignIn = async () => {
     const { error } = await supabase.auth.signInWithOAuth({

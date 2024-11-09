@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
 import { OpenAI } from 'openai';
+import { getRouteSupabase } from '@/lib/supabase';
 
 // Only initialize OpenAI if API key exists
-const openai = process.env.OPENAI_API_KEY 
+const openai = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
 
@@ -18,15 +18,16 @@ export async function POST(request: Request) {
 
   try {
     const { userId, domain, query } = await request.json();
+    const supabase = getRouteSupabase();
 
     // 1. Get user's social data
-    const { data: profiles } = await supabase
+    const { data: profiles, error: profileError } = await supabase
       .from('social_profiles')
       .select('*')
       .eq('user_id', userId)
       .single();
 
-    if (!profiles) {
+    if (profileError || !profiles) {
       return NextResponse.json(
         { error: 'No social profile found' },
         { status: 404 }
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
     });
 
   } catch (error) {
+    console.error('Understanding generation error:', error);
     return NextResponse.json(
       { error: 'Failed to generate understanding' },
       { status: 500 }

@@ -1,22 +1,26 @@
 // src/lib/supabase.ts
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import type { Database } from './database.types';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import type { Database } from './database.types'
 
-let clientInstance: ReturnType<typeof createClientComponentClient<Database>> | null = null;
+// Client-side singleton instance
+let clientInstance: ReturnType<typeof createClientComponentClient<Database>> | null = null
 
-export function getSupabaseClient() {
-  if (typeof window === 'undefined') {
-    // For server-side operations, always create a new instance
-    return createClientComponentClient<Database>();
-  }
-  
+// Function to get the client-side instance
+export function getClientSupabase() {
   if (!clientInstance) {
-    clientInstance = createClientComponentClient<Database>();
+    clientInstance = createClientComponentClient<Database>()
   }
-  return clientInstance;
+  return clientInstance
 }
 
-// Export a hook for component use
-export function useSupabaseClient() {
-  return getSupabaseClient();
+// Route handler (API) client creation function
+export function getRouteSupabase() {
+  return createRouteHandlerClient<Database>({ cookies })
+}
+
+// Hook for component use
+export function useSupabase() {
+  return getClientSupabase()
 }

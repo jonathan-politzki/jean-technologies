@@ -1,11 +1,10 @@
-// src/components/OnboardingFlow.tsx
-
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useSupabase } from '@/lib/supabase';
 
 export function OnboardingFlow() {
   const [socialUrl, setSocialUrl] = useState('');
   const [platform, setPlatform] = useState<'instagram' | 'twitter'>('instagram');
+  const supabase = useSupabase();
 
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -21,22 +20,31 @@ export function OnboardingFlow() {
   };
 
   const handleSocialSubmit = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      console.error('User not found:', userError);
+      return;
+    }
 
-    const response = await fetch('/api/social-link', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: user.id,
-        platform,
-        profileUrl: socialUrl
-      })
-    });
+    try {
+      const response = await fetch('/api/social-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          platform,
+          profileUrl: socialUrl
+        })
+      });
 
-    if (response.ok) {
-      // Handle success
-      console.log('Social profile added!');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      console.log('Social profile added successfully!');
+      setSocialUrl('');
+    } catch (error) {
+      console.error('Failed to add social profile:', error);
     }
   };
 
@@ -79,24 +87,3 @@ export function OnboardingFlow() {
     </div>
   );
 }
-
-// Example of how to use the understand API (moved to documentation or separate file)
-/*
-async function getUnderstanding(userId: string) {
-  const response = await fetch('/api/understand', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${API_KEY}`
-    },
-    body: JSON.stringify({
-      userId,
-      domain: 'shopping_preferences',
-      query: 'What kind of fashion styles would this user prefer?'
-    })
-  });
-
-  const { embedding, metadata } = await response.json();
-  return { embedding, metadata };
-}
-*/

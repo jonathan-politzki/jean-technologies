@@ -1,14 +1,16 @@
-// src/app/providers.tsx
 'use client';
 
 import { createContext, useContext } from 'react';
-import { getSupabaseClient } from '@/lib/supabase';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { Database } from '@/lib/database.types';
 
-const SupabaseContext = createContext<ReturnType<typeof getSupabaseClient> | undefined>(undefined);
+type SupabaseClient = ReturnType<typeof createClientComponentClient<Database>>;
+
+const SupabaseContext = createContext<SupabaseClient | undefined>(undefined);
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const supabase = getSupabaseClient();
+  // Create a new client for the provider
+  const supabase = createClientComponentClient<Database>();
   
   return (
     <SupabaseContext.Provider value={supabase}>

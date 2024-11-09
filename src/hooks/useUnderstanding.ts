@@ -1,13 +1,12 @@
 // src/hooks/useUnderstanding.ts
 import { useState } from 'react';
-import { getSupabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { Understanding, UnderstandUserParams } from '../lib/types';
 import { handleError } from '../utils/errors';
 
 export function useUnderstanding() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const supabase = getSupabase();
 
   const generateUnderstanding = async (params: UnderstandUserParams): Promise<Understanding | null> => {
     try {

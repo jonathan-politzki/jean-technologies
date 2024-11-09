@@ -3,9 +3,10 @@
 import { createContext, useContext } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import type { Database } from '../lib/database.types'
+import { getSupabaseClient } from '@/lib/supabase'
 
 // Create a singleton instance outside of any component
-const supabase = createClientComponentClient<Database>()
+const supabase = getSupabaseClient()
 
 const SupabaseContext = createContext<typeof supabase | undefined>(undefined)
 

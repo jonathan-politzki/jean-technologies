@@ -11,20 +11,14 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
   throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable')
 }
 
-// For server-side operations with additional configuration
-export const supabase = createClient(
+// For server-side operations
+export const supabase = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   {
     auth: {
       autoRefreshToken: true,
       persistSession: true
-    },
-    global: {
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
     }
   }
 );
@@ -32,28 +26,20 @@ export const supabase = createClient(
 // For client-side operations (singleton)
 let clientInstance: ReturnType<typeof createClientComponentClient<Database>> | null = null;
 
-export const getSupabase = () => {
-  if (typeof window === 'undefined') return supabase; // Use server client for SSR
-  
+export function getSupabaseClient() {
+  if (typeof window === 'undefined') {
+    // Server-side: Use server client
+    return supabase;
+  }
+
+  // Client-side: Return existing instance or create new one
   if (!clientInstance) {
-    clientInstance = createClientComponentClient<Database>({
-      options: {
-        global: {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
-        }
-      }
-    });
+    clientInstance = createClientComponentClient<Database>();
   }
   return clientInstance;
-};
+}
 
 // Helper to ensure we're using the right client
 export const getClient = (isServer = false) => {
-  if (isServer) {
-    return supabase;
-  }
-  return getSupabase();
+  return isServer ? supabase : getSupabaseClient();
 };

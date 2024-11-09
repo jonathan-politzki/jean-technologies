@@ -1,25 +1,24 @@
 // src/hooks/useUnderstanding.ts
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useSupabaseClient } from '@/lib/supabase';
 import { Understanding, UnderstandUserParams } from '../lib/types';
 import { handleError } from '../utils/errors';
 
 export function useUnderstanding() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const supabase = useSupabaseClient();
 
   const generateUnderstanding = async (params: UnderstandUserParams): Promise<Understanding | null> => {
     try {
       setLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
-        .functions.invoke('understand_user', {
-          body: params
-        });
+      const { data, error } = await supabase.functions.invoke('understand_user', {
+        body: params
+      });
 
       if (error) throw error;
-
       return data as Understanding;
     } catch (err) {
       const error = handleError(err);
@@ -35,13 +34,11 @@ export function useUnderstanding() {
       setLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
-        .functions.invoke('find_similar', {
-          body: { userId, limit }
-        });
+      const { data, error } = await supabase.functions.invoke('find_similar', {
+        body: { userId, limit }
+      });
 
       if (error) throw error;
-
       return data;
     } catch (err) {
       const error = handleError(err);

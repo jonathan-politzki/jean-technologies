@@ -1,11 +1,11 @@
 // src/components/OnboardingFlow.tsx
-
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useSupabaseClient } from '@/lib/supabase';
 
 export function OnboardingFlow() {
   const [socialUrl, setSocialUrl] = useState('');
   const [platform, setPlatform] = useState<'instagram' | 'twitter'>('instagram');
+  const supabase = useSupabaseClient();
 
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -35,7 +35,6 @@ export function OnboardingFlow() {
     });
 
     if (response.ok) {
-      // Handle success
       console.log('Social profile added!');
     }
   };
@@ -79,24 +78,3 @@ export function OnboardingFlow() {
     </div>
   );
 }
-
-// Example of how to use the understand API (moved to documentation or separate file)
-/*
-async function getUnderstanding(userId: string) {
-  const response = await fetch('/api/understand', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${API_KEY}`
-    },
-    body: JSON.stringify({
-      userId,
-      domain: 'shopping_preferences',
-      query: 'What kind of fashion styles would this user prefer?'
-    })
-  });
-
-  const { embedding, metadata } = await response.json();
-  return { embedding, metadata };
-}
-*/

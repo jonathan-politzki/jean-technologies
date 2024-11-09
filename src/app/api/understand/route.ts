@@ -1,14 +1,14 @@
+// src/app/api/understand/route.ts
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
 import { OpenAI } from 'openai';
 
-// Only initialize OpenAI if API key exists
 const openai = process.env.OPENAI_API_KEY 
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
 
 export async function POST(request: Request) {
-  // Check for OpenAI API key before processing
   if (!openai) {
     return NextResponse.json(
       { error: 'OpenAI API key not configured' },
@@ -18,8 +18,9 @@ export async function POST(request: Request) {
 
   try {
     const { userId, domain, query } = await request.json();
+    const supabase = createRouteHandlerClient({ cookies });
 
-    // 1. Get user's social data
+    // Get user's social data
     const { data: profiles } = await supabase
       .from('social_profiles')
       .select('*')
@@ -33,13 +34,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Generate embedding from social context
+    // Generate embedding
     const embedding = await openai.embeddings.create({
       model: "text-embedding-3-large",
       input: `User Profile URL: ${profiles.profile_url}\nQuery: ${query}\nDomain: ${domain}`
     });
 
-    // 3. Store embedding
+    // Store embedding
     const { data: storedEmbedding, error: storageError } = await supabase
       .from('embeddings')
       .insert({

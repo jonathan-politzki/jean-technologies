@@ -1,10 +1,12 @@
 // src/app/api/social-link/route.ts
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';  // Using the server-side client
 
 export async function POST(request: Request) {
   try {
     const { userId, platform, profileUrl } = await request.json();
+    const supabase = createRouteHandlerClient({ cookies });
 
     const { error } = await supabase
       .from('social_profiles')

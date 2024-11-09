@@ -17,36 +17,44 @@ export default function Home() {
 
   useEffect(() => {
     const handleSession = async () => {
+      console.log('Initializing session check...');
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) {
-          throw sessionError;
-        }
+        console.log('Session state:', {
+          hasSession: !!session,
+          hasUser: !!session?.user,
+          userId: session?.user?.id,
+          provider: session?.user?.app_metadata?.provider,
+          error: sessionError
+        });
+        
+        if (sessionError) throw sessionError;
         
         if (session?.user) {
           setUser(session.user);
+          console.log('User authenticated:', session.user.id);
           
           const { data: profile, error: profileError } = await supabase
             .from('social_profiles')
-            .select(`
-                id,
-                user_id,
-                platform,
-                platform_user_id,
-                access_token,
-                refresh_token,
-                profile_data,
-                created_at,
-                updated_at
-            `)
+            .select()
             .eq('user_id', session.user.id)
             .single();
             
+          console.log('Profile fetch:', {
+            hasProfile: !!profile,
+            profileId: profile?.id,
+            platform: profile?.platform,
+            error: profileError,
+            errorCode: profileError?.code
+          });
+          
           if (profileError && profileError.code !== 'PGRST116') {
             throw profileError;
           }
           
           setSocialProfile(profile);
+        } else {
+          console.log('No active session found');
         }
       } catch (e) {
         console.error('Session error:', e);
@@ -61,6 +69,11 @@ export default function Home() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state changed:', {
+        event: _event,
+        hasUser: !!session?.user,
+        userId: session?.user?.id
+      });
       setUser(session?.user || null);
       router.refresh();
     });

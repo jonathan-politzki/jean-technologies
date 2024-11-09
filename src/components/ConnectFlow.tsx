@@ -1,3 +1,6 @@
+// src/components/ConnectFlow.tsx
+'use client';
+
 import { useState, useEffect } from 'react';
 import { Platform, SocialProfile } from '../lib/types';
 import { useSocialConnect } from '../hooks/useSocialConnect';
@@ -10,11 +13,7 @@ interface Props {
   onProfileUpdate: (profile: SocialProfile | null) => void;
 }
 
-export default function ConnectFlow({ 
-  userId, 
-  existingProfile, 
-  onProfileUpdate 
-}: Props) {
+export default function ConnectFlow({ userId, existingProfile, onProfileUpdate }: Props) {
   const [connectedPlatforms, setConnectedPlatforms] = useState<SocialProfile[]>([]);
   const { connectPlatform, getConnectedPlatforms, disconnectPlatform, loading, error } = useSocialConnect();
 
@@ -24,9 +23,7 @@ export default function ConnectFlow({
 
   const loadConnectedPlatforms = async () => {
     try {
-      console.log('Loading connected platforms for user:', userId);
       const platforms = await getConnectedPlatforms();
-      console.log('Loaded platforms:', platforms);
       setConnectedPlatforms(platforms);
       onProfileUpdate(platforms[0] || null);
     } catch (err) {

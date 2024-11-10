@@ -1,3 +1,5 @@
+import { Tables } from "./database.types";
+
 // User Types
 export interface User {
   id: string;
@@ -33,17 +35,7 @@ export interface LinkedInProfile {
   skills?: LinkedInSkill[];
 }
 
-export interface SocialProfile {
-    id: string;
-    user_id: string;
-    platform: Platform;
-    platform_user_id: string;
-    access_token?: string;
-    refresh_token?: string;
-    profile_data?: Record<string, any>;
-    created_at?: Date;
-    updated_at?: Date;
-}
+export type SocialProfile = Tables<'social_profiles'>
 
 // AI/ML Types
 export interface Embedding {

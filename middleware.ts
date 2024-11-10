@@ -1,28 +1,24 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { redirect } from 'next/navigation';
+import { updateSession } from './src/lib/supabase/middleware';
+import { type NextRequest } from 'next/server'
+
+
+export async function middleware(request: NextRequest) {
+  if (request.nextUrl.pathname.includes('/login')) {
+    redirect('/');
+  }
+  return await updateSession(request)
+}
 
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for:
+     * Match all request paths except for the ones starting with:
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * Feel free to modify this pattern to include more paths.
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
-  runtime: 'edge',
-};
-
-export async function middleware(req: NextRequest) {
-  try {
-    const res = NextResponse.next();
-    const supabase = createMiddlewareClient({ req, res });
-    await supabase.auth.getSession();
-    return res;
-  } catch (error) {
-    console.error('Middleware error:', error);
-    return NextResponse.next();
-  }
 }

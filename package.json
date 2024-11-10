@@ -15,11 +15,12 @@
   "license": "ISC",
   "dependencies": {
     "@supabase/auth-helpers-nextjs": "^0.9.0",
-    "@supabase/supabase-js": "^2.39.3",
-    "next": "latest",
+    "@supabase/ssr": "^0.5.1",
+    "@supabase/supabase-js": "^2.46.1",
+    "next": "^15.0.3",
     "openai": "^4.70.2",
-    "react": "latest",
-    "react-dom": "latest",
+    "react": "^19.0.0-rc-5c56b873-20241107",
+    "react-dom": "^19.0.0-rc-5c56b873-20241107",
     "zod": "^3.22.4"
   },
   "devDependencies": {

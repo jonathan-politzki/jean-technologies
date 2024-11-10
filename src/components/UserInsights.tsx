@@ -1,42 +1,13 @@
-import { useEffect, useState } from 'react';
-import { useUnderstanding } from '../hooks/useUnderstanding';
-import { Understanding } from '../lib/types';
+import { generateUnderstanding } from '@/lib/supabase/server';
 
-interface Props {
-  userId: string;
-}
 
-export function UserInsights({ userId }: Props) {
-  const [understanding, setUnderstanding] = useState<Understanding | null>(null);
-  const { generateUnderstanding, loading, error } = useUnderstanding();
+export async function UserInsights({ userId }: { userId: string }) {
 
-  useEffect(() => {
-    loadUnderstanding();
-  }, [userId]);
-
-  const loadUnderstanding = async () => {
-    const result = await generateUnderstanding({
-      userId,
-      domain: 'general',
-      query: 'What are this user\'s key characteristics and interests?'
-    });
-
-    if (result) {
-      setUnderstanding(result);
-    }
-  };
-
-  if (loading) {
-    return <div className="flex justify-center p-4">Analyzing profiles...</div>;
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 text-red-500">
-        Error generating insights: {error.message}
-      </div>
-    );
-  }
+  const understanding = await generateUnderstanding({
+    userId,
+    domain: 'general',
+    query: 'What are this user\'s key characteristics and interests?'
+  });
 
   if (!understanding) {
     return null;

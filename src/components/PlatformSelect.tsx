@@ -1,4 +1,4 @@
-import { Platform } from '../lib/types';
+import { Platform, PLATFORM_MAPPING } from '../lib/types';
 import { PlatformConnection } from './PlatformConnection';
 
 interface Props {
@@ -15,7 +15,8 @@ export const PLATFORMS_DATA: {
       id: 'google',
       name: 'Google',
       icon: '🌐',
-      description: 'Connect your Google account'
+      description: 'Connect your Google account',
+
     },
     {
       id: 'github',
@@ -24,7 +25,7 @@ export const PLATFORMS_DATA: {
       description: 'Connect your GitHub profile'
     },
     {
-      id: 'linkedin_oidc',
+      id: 'linkedin',
       name: 'LinkedIn',
       icon: '🔗',
       description: 'Connect your professional profile'
@@ -34,13 +35,15 @@ export const PLATFORMS_DATA: {
 export function PlatformSelect({ connectedPlatforms }: Props) {
   return (
     <div className="space-y-4">
-      {PLATFORMS_DATA.map(platform => {
-        const isConnected = connectedPlatforms.includes(platform.id);
+      {PLATFORMS_DATA.map(platformData => {
+        const isConnected = connectedPlatforms.some(
+          connectedId => PLATFORM_MAPPING[connectedId] === platformData.id
+        );
 
         return (
           <PlatformConnection
-            key={platform.id}
-            platform={platform}
+            key={platformData.id}
+            platform={platformData}
             isConnected={isConnected}
           />
         );

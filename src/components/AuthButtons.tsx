@@ -4,7 +4,6 @@ import { handleSignIn } from '@/utils/auth/actions';
 import { Provider } from '@supabase/supabase-js';
 
 
-
 export const LogInButton = ({ provider }: { provider: Provider }) => (
     
     <button

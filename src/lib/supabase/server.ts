@@ -3,7 +3,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { Database, Tables } from '@/lib/database.types'
-import { SupabaseClient, User } from '@supabase/supabase-js'
+import {  User } from '@supabase/supabase-js'
 import { Platform, Understanding, UnderstandUserParams } from '../types'
 import { redirect } from 'next/navigation';
 
@@ -41,17 +41,7 @@ export async function getUserProfiles(user: User) {
 
   const { data: profile, error: profileError } = await supabase
     .from('social_profiles')
-    .select(`
-      id,
-      user_id,
-      platform,
-      platform_user_id,
-      access_token,
-      refresh_token,
-      profile_data,
-      created_at,
-      updated_at
-    `)
+    .select('*')
     .eq('user_id', user.id)
 
   if (profileError) {
@@ -93,7 +83,7 @@ export async function connectPlatform(platform: Platform): Promise<void> {
         provider: platform,
         options: {
           redirectTo: `${process.env.NEXT_PUBLIC_URL}/auth/callback`,
-          scopes: platform === 'linkedin_oidc' 
+          scopes: platform === 'linkedin' 
             ? 'openid profile email' 
             : 'profile email',
           queryParams: {

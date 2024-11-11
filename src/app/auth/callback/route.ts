@@ -21,6 +21,8 @@ export async function GET(request: Request) {
     }
 
     if (session?.user) {
+        const providerName = session.user.user_metadata.provider_id;
+
       // Create user record
       const { data: userData, error: userError } = await supabase
         .from('users')
@@ -37,16 +39,18 @@ export async function GET(request: Request) {
       if (userError) {
         console.error('User creation error:', userError)
       }
+
+      console.log('session', session)
       // Create social profile if provider token exists
-      if (session.provider_token) {
+      if (session.access_token) {
         const { error: profileError } = await supabase
           .from('social_profiles')
           .upsert({
             user_id: session.user.id,
-            platform: session.user.app_metadata.provider as string,
-            platform_user_id: session.user.id,
-            access_token: session.provider_token,
-            refresh_token: session.provider_refresh_token || null,
+            platform: providerName,
+            platform_user_id: `${providerName}:${session.user.id}`,
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
             profile_data: session.user.user_metadata,
             updated_at: new Date().toISOString()
           }, {

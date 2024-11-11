@@ -1,4 +1,5 @@
 // src/app/api/understand/route.ts
+import { createClient } from '@/lib/supabase/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
 
   try {
     const { userId, domain, query } = await request.json();
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createClient();
 
     // Get user's social data
     const { data: profiles } = await supabase
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
     // Generate embedding
     const embedding = await openai.embeddings.create({
       model: "text-embedding-3-large",
-      input: `User Profile URL: ${profiles.profile_url}\nQuery: ${query}\nDomain: ${domain}`
+      input: `User Profile URL: ${profiles.profile_data?.toString()}\nQuery: ${query}\nDomain: ${domain}`
     });
 
     // Store embedding
@@ -46,7 +47,8 @@ export async function POST(request: Request) {
       .insert({
         user_id: userId,
         domain,
-        embedding: embedding.data[0].embedding,
+        source: domain,
+        embedding: JSON.stringify(embedding.data[0].embedding),
         metadata: {
           query,
           confidence: 0.85,

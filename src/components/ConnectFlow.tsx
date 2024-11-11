@@ -4,7 +4,10 @@ import { UserInsights } from './UserInsights';
 
 
 export default function ConnectFlow({ socialProfiles }: { socialProfiles: SocialProfile[] }) {
-
+    const profileUrls = socialProfiles.map(p => {
+        const data = p.profile_data as { iss?: string }
+        return data?.iss
+    }).filter(Boolean) as string[]
 
   return (
     <div className="max-w-lg mx-auto p-4">
@@ -12,7 +15,7 @@ export default function ConnectFlow({ socialProfiles }: { socialProfiles: Social
 
       
       <PlatformSelect
-        connectedPlatforms={socialProfiles.map(p => p.platform as Platform)}
+        connectedPlatforms={profileUrls}
       />
 
       {socialProfiles.length > 0 && (

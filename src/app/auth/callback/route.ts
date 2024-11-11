@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     }
 
     if (session?.user) {
-        const providerName = session.user.user_metadata.provider_id;
+        const providerId = session.user.user_metadata.provider_id;
 
       // Create user record
       const { data: userData, error: userError } = await supabase
@@ -40,15 +40,16 @@ export async function GET(request: Request) {
         console.error('User creation error:', userError)
       }
 
-      console.log('session', session)
+      const iss = session.user.user_metadata.iss
+
       // Create social profile if provider token exists
       if (session.access_token) {
         const { error: profileError } = await supabase
           .from('social_profiles')
           .upsert({
             user_id: session.user.id,
-            platform: providerName,
-            platform_user_id: `${providerName}:${session.user.id}`,
+            platform: getPlatform(iss),
+            platform_user_id: providerId,
             access_token: session.access_token,
             refresh_token: session.refresh_token,
             profile_data: session.user.user_metadata,
@@ -78,4 +79,11 @@ export async function GET(request: Request) {
 }
 
   return NextResponse.redirect(`${origin}/error`)
+}
+
+const getPlatform = (iss: string) => {
+  if (iss.includes('google')) return 'google'
+  if (iss.includes('github')) return 'github'
+  if (iss.includes('linkedin')) return 'linkedin'
+  return ""
 }

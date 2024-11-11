@@ -1,8 +1,8 @@
-import { Platform, PLATFORM_MAPPING } from '../lib/types';
+import { Platform } from '../lib/types';
 import { PlatformConnection } from './PlatformConnection';
 
 interface Props {
-  connectedPlatforms: Platform[];
+  connectedPlatforms: string[];
 }
 
 export const PLATFORMS_DATA: {
@@ -36,9 +36,9 @@ export function PlatformSelect({ connectedPlatforms }: Props) {
   return (
     <div className="space-y-4">
       {PLATFORMS_DATA.map(platformData => {
-        const isConnected = connectedPlatforms.some(
-          connectedId => PLATFORM_MAPPING[connectedId] === platformData.id
-        );
+        console.log(connectedPlatforms);
+        const isConnected = connectedPlatforms.some(url => url.includes(platformData.id))
+        console.log(isConnected, platformData.id);
 
         return (
           <PlatformConnection

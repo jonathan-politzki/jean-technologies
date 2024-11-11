@@ -12,12 +12,6 @@ export interface User {
 
 // Social Types
 export type Platform = 'google' | 'github' | 'linkedin';
-
-export const PLATFORM_MAPPING: Record<string, Platform> = {
-  '114417347604883397027': 'google',
-  'x': 'github', 
-  'KYs098ERNb': 'linkedin'
-} as const;
   
 export interface LinkedInPosition {
   title: string;

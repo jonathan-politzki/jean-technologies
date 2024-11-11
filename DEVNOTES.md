@@ -14,6 +14,11 @@ Key findings during development of bug fixing for Auth and other functionality:
         - Triggers could also be made for updating social_profiles, but this is slightlymore complex since you have to handle upserts for refresh tokens 
     - Instead of `window.location` to find the URL to redirect to, I'm using `NEXT_PUBLIC_BASE_URL` instead. **You will need to make sure this is properly configered in Vercel for it to work on prod**
 
+- Here are links discussion the potential issue (Supabase bug?) that appears to occur after 24 hours of auth:
+    - https://www.reddit.com/r/Supabase/comments/1g76vfr/supabase_auth_is_not_refresing_my_auth_cookies/?rdt=64688
+    - https://github.com/supabase/ssr/issues/68
+    - https://github.com/supabase/supabase/issues/30218
+
 Important note on OAuth data: 
 Here's what some sample data looks like with some notes that are important. Highly recommend remembering these details, as it will help you later: 
 

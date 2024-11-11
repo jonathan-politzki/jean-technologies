@@ -108,10 +108,14 @@ export async function connectPlatform(platform: Platform): Promise<void> {
 }
 
 export async function handleConnect(platform: Platform, isConnected: boolean) {
+  let name: Platform = 'linkedin';
+  if (platform === 'linkedin') {
+    name = 'linkedin_oidc';
+  }
   if (isConnected) {
-      await disconnectPlatform(platform);
+      await disconnectPlatform(name);
     } else {
-      await connectPlatform(platform);
+      await connectPlatform(name);
     }
   }
 

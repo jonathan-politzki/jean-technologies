@@ -42,6 +42,8 @@ export async function GET(request: Request) {
 
       const iss = session.user.user_metadata.iss
 
+      console.dir(session, { depth: null })
+
       // Create social profile if provider token exists
       if (session.access_token) {
         const { error: profileError } = await supabase

@@ -10,6 +10,8 @@ export async function GET(request: Request) {
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/'
 
+  console.log('hitting callback')
+
   console.log('supabase', code, next, origin)
   if (code) {
     const supabase = await createClient()

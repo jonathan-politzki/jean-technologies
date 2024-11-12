@@ -5,6 +5,8 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
 
+export const dynamic = 'force-dynamic';
+
 const openai = process.env.OPENAI_API_KEY 
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;

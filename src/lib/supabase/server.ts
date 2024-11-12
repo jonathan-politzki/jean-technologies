@@ -82,7 +82,7 @@ export async function connectPlatform(platform: Platform): Promise<void> {
     const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: platform,
         options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_URL}/auth/callback`,
+          redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback`,
           scopes: platform === 'linkedin' 
             ? 'openid profile email' 
             : 'profile email',

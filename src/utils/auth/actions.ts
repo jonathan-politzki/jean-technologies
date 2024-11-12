@@ -10,7 +10,7 @@ export const handleSignIn = async (provider: Provider) => {
     const { error, data } = await supabase.auth.signInWithOAuth({
       provider: provider,
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_URL}/auth/callback` // Must match route exactly
+        redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback` // Must match route exactly
       }
     });
 

@@ -85,7 +85,6 @@ export async function connectPlatform(platform: Platform): Promise<void> {
         provider: platform,
         options: {
           redirectTo: `${baseUrl}/auth/callback`,
-          redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback`,
           scopes: platform === 'linkedin' 
             ? 'openid profile email' 
             : 'profile email',
